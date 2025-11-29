@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # --- Infrastructure Services ---
+
+  # 1. Message Broker (RabbitMQ)
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: mfa-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - mfa-network
+
+  # 2. Event Streaming (Kafka + Zookeeper)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    container_name: mfa-zookeeper
+    platform: linux/amd64  # CRITICAL for Mac stability
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - mfa-network
+    healthcheck:
+      test: echo srvr | nc localhost 2181 || exit 1
+      interval: 10s
+      retries: 5
+      start_period: 10s
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: mfa-kafka
+    platform: linux/amd64  # CRITICAL for Mac stability
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      
+      # Allow connections from Docker (kafka:29092) AND your Mac (localhost:9092)
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - mfa-network
+
+  # 3. Redis (for Caching / SignalR Backplane)
+  redis:
+    image: redis:alpine
+    container_name: mfa-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - mfa-network
+
+networks:
+  mfa-network:
+    driver: bridge

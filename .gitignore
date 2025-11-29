@@ -1,0 +1,60 @@
+## Ignore Visual Studio temporary files, build results, and IDE settings
+[Dd]ebug/
+[Rr]elease/
+[Bb]in/
+[Oo]bj/
+*.log
+*.pfx
+*.vspscc
+*.vssscc
+.vs/
+.vscode/
+
+## Ignore common build files and directories
+[Tt]emp/
+[Rr]esharper[Cc]ache/
+[Ss]ource[Bb]indings/
+packages/
+*.suo
+*.user
+*.config.user
+*.csproj.user
+*.sln.ghostdoc
+*.opensdf
+*.sdf
+*.cache
+*.gbproj
+*.user
+*.webinfo
+*.webtest
+*.publishsettings
+
+## Ignore coverage tools output
+[Cc]overage/
+*.coverage
+*.coveragexml
+
+## Ignore test results
+[Tt]est[Rr]esult[Ss]pace/
+
+## Ignore NuGet packages (if not using PackageReference in .csproj)
+# *.nupkg
+# the path to the NuGet packages folder can be specified in the NuGet.config
+# file as the "repositoryPath" or "globalPackagesFolder".
+# If the packages folder is in the project root, uncomment the following line:
+# packages/
+
+## Ignore other common OS and development files
+*.pid
+*.booproj
+*.wrap
+_ReSharper.*/
+*.[Ee]xe
+*.[Dd]ll
+*.pdb
+
+# Visual Studio Code
+.vscode/
+
+# Environment secrets
+appsettings.Development.json
