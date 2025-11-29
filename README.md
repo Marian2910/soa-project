@@ -5,7 +5,7 @@ simulate a high-security HR platform.\
 The system enables employees to securely update sensitive information
 (IBAN / Bank Details) using **Multi-Factor Authentication (OTP)**.
 
-------------------------------------------------------------------------
+---
 
 ## Architecture Overview
 
@@ -16,112 +16,118 @@ functionality into independently deployable microservices.
 
 #### **HrPayroll.Auth**
 
--   Handles user registration & login\
--   Issues securely signed JWT tokens\
--   Connects to **MongoDB**
+- Handles user registration & login\
+- Issues securely signed JWT tokens\
+- Connects to **MongoDB**
 
 #### **HrPayroll.Profile**
 
--   Core business logic\
--   Manages employee profiles and sensitive data updates\
--   Acts as a **Gatekeeper**, verifying OTPs before allowing changes
+- Core business logic\
+- Manages employee profiles and sensitive data updates\
+- Acts as a **Gatekeeper**, verifying OTPs before allowing changes
 
 #### **HrPayroll.OtpService**
 
--   Generates secure one-time passwords\
--   Publishes `OtpGenerated` events to RabbitMQ
+- Generates secure one-time passwords\
+- Publishes `OtpGenerated` events to RabbitMQ
 
 #### **HrPayroll.Notifications**
 
--   Background worker\
--   Consumes messages from RabbitMQ\
--   Simulates sending notification emails
+- Background worker\
+- Consumes messages from RabbitMQ\
+- Simulates sending notification emails
 
-------------------------------------------------------------------------
+---
 
 ## Infrastructure & Messaging
 
--   **RabbitMQ** -- async OTP email delivery (decoupled communication)\
--   **Kafka** -- immutable event streaming for audit logs
-    (**non-repudiation**)\
--   **MongoDB** -- stores users & profile data\
--   **Nginx** -- API gateway + load balancer for micro-frontends\
--   **Docker Compose** -- orchestrates entire environment
+- **RabbitMQ** -- async OTP email delivery (decoupled communication)\
+- **Kafka** -- immutable event streaming for audit logs
+  (**non-repudiation**)\
+- **MongoDB** -- stores users & profile data\
+- **Nginx** -- API gateway + load balancer for micro-frontends\
+- **Docker Compose** -- orchestrates entire environment
 
-------------------------------------------------------------------------
+---
 
 ## Project Requirements Checklist
 
-------------------------------------------------------------------------
-  Requirement                   Details                Status
-  ----------------------------- ---------------------- -------------------
-  **Build software system based Auth, Profile, OTP,    ✅ Done
-  on different types of         Notification           
-  services (\>2                                        
-  microservices)**                                     
+---
 
-  **Web server exposing secured JWT authentication     ✅ Done
-  REST services**                                      
+Requirement Details Status
 
-  **Scalability using load      Nginx reverse proxy &  ✅ Done
-  balancers (Nginx)**           load balancer          
+---
 
-  **Use message broker          OTP delivery events    ✅ Done
-  (RabbitMQ)**                                         
+**Build software system based Auth, Profile, OTP, ✅ Done
+on different types of Notification  
+ services (\>2  
+ microservices)**
 
-  **Use event streaming         Audit logs             ✅ Done
-  (Kafka)**                     (`otp.validated`)      
+**Web server exposing secured JWT authentication ✅ Done
+REST services**
 
-  **Use a FaaS**                Under integration      🚧 In Progress
-                                (audit lambda)         
+**Scalability using load Nginx reverse proxy & ✅ Done
+balancers (Nginx)** load balancer
 
-  **Web app consuming REST &    React MFE + RabbitMQ   🚧 In Progress
-  receiving server-side         consumer planned       
-  notifications**                                      
+**Use message broker OTP delivery events ✅ Done
+(RabbitMQ)**
 
-  **Micro-frontend              Host App + Profile MFE 🚧 In Progress
-  architecture**                                       
+**Use event streaming Audit logs ✅ Done
+(Kafka)** (`otp.validated`)
 
-  **Containers deployment       Full docker-compose    ✅ Done
-  (Docker)**    
-                            
-  **Documentation (UML, C4)      C4 diagrams included  🚧 In Progress**                                      
-  ------------------------------------------------------------------------
+**Use a FaaS** Under integration 🚧 In Progress
+(audit lambda)
 
-------------------------------------------------------------------------
+**Web app consuming REST & React MFE + RabbitMQ 🚧 In Progress
+receiving server-side consumer planned  
+ notifications**
+
+**Micro-frontend Host App + Profile MFE 🚧 In Progress
+architecture**
+
+**Containers deployment Full docker-compose ✅ Done
+(Docker)**
+
+**Documentation (UML, C4) C4 diagrams included 🚧 In Progress**
+
+---
+
+---
 
 ## Getting Started
 
 ### **Prerequisites**
 
--   Docker & Docker Compose\
--   .NET 8 SDK
+- Docker & Docker Compose\
+- .NET 8 SDK
 
-------------------------------------------------------------------------
+---
 
 ### **1. Build the Solution**
 
-``` bash
+```bash
 dotnet build
 ```
 
 ### **2. Start Infrastructure & Services**
 
-``` bash
+```bash
 docker-compose up -d --build
 ```
 
-------------------------------------------------------------------------
+---
 
 ## Access Points
 
-  Interface          URL                      Credentials
-  ------------------ ------------------------ ------------------
-  Mongo Express      http://localhost:8081    admin / password
-  RabbitMQ UI        http://localhost:15672   guest / guest
-  Frontend Gateway   http://localhost/        ---
+Interface URL Credentials
 
-------------------------------------------------------------------------
+---
+
+Mongo Express http://localhost:8081 admin / password
+RabbitMQ UI http://localhost:15672 guest / guest
+Frontend Gateway http://localhost/ ---
+
+---
 
 ## Testing the API (Postman / Swagger)
 
@@ -131,7 +137,7 @@ docker-compose up -d --build
 
 Body:
 
-``` json
+```json
 {
   "email": "dev@bt.ro",
   "password": "pass",
@@ -146,7 +152,7 @@ Body:
 
 Copy the JWT token.
 
-------------------------------------------------------------------------
+---
 
 ### **Step 3: Request IBAN Update**
 
@@ -158,7 +164,7 @@ Headers:
 
 Check the **HrPayroll.Notifications** terminal to retrieve the OTP code.
 
-------------------------------------------------------------------------
+---
 
 ### **Step 4: Confirm Update**
 
@@ -166,7 +172,7 @@ Check the **HrPayroll.Notifications** terminal to retrieve the OTP code.
 
 Body:
 
-``` json
+```json
 {
   "newIban": "RO99...",
   "otpCode": "123456",
@@ -174,11 +180,11 @@ Body:
 }
 ```
 
-------------------------------------------------------------------------
+---
 
-## 📐 System Diagram (C4 -- Container Level)
+## System Diagram (C4 -- Container Level)
 
-``` mermaid
+```mermaid
 graph TD
     User((User))
 
@@ -211,5 +217,5 @@ graph TD
     Otp --Publish--> Rabbit
     Rabbit --Consume--> Notify
 
-    Profile --Audit Log--> Kafka
+Profile --Audit Log--> Kafka
 ```
