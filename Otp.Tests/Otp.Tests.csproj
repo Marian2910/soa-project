@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Otp.Api\Otp.Api.csproj" />
+    <ProjectReference Include="..\HrPayroll.OtpService\HrPayroll.OtpService.csproj" />
   </ItemGroup>
 
 </Project>

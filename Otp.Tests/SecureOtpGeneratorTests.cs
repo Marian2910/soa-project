@@ -1,4 +1,4 @@
-using Otp.Api.Services;
+using HrPayroll.OtpService.Services;
 using Xunit;
 
 namespace Otp.Tests

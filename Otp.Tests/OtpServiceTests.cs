@@ -1,22 +1,39 @@
 using System.Collections.Concurrent;
 using System.Reflection;
-using Otp.Api.Models;
-using Otp.Api.Services;
-using Otp.Api.Services.Interfaces;
+using HrPayroll.OtpService.Models;
+using HrPayroll.OtpService.Services;
+using HrPayroll.OtpService.Services.Messaging;
+using HrPayroll.OtpService.Services.Interfaces;
 using Moq;
+using Microsoft.Extensions.Configuration;
 
 namespace Otp.Tests;
 
 public class OtpServiceTests
 {
     private readonly SecureOtpGenerator _generator = new();
-    private readonly Mock<IEmailSender> _emailSenderMock = new();
+    private readonly Mock<IMessageProducer> _messageProducerMock = new();
 
     private OtpService CreateService(int expirySeconds = 120)
-        => new(_generator, _emailSenderMock.Object, expirySeconds);
+    {
+        // Create an in-memory configuration to simulate appsettings
+        var inMemorySettings = new Dictionary<string, string?> {
+            {"OtpSettings:ExpirySeconds", expirySeconds.ToString()},
+            {"Kafka:BootstrapServers", "localhost:9092"}
+        };
+    
+        IConfiguration configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(inMemorySettings)
+            .Build();
+
+        // Create a real KafkaProducer instance (won't actually connect in tests)
+        var kafkaProducer = new KafkaProducer(configuration);
+
+        return new OtpService(_generator, _messageProducerMock.Object, kafkaProducer, configuration);
+    }
 
     [Fact]
-    public async Task IssueOtp_ShouldReturnMetadataAndSendEmail()
+    public async Task IssueOtp_ShouldReturnMetadataAndPublishMessage()
     {
         // Arrange
         var service = CreateService(expirySeconds: 120);
@@ -33,8 +50,9 @@ public class OtpServiceTests
         Assert.Equal(120, response.ExpiresInSeconds);
         Assert.True(response.SentByEmail);
 
-        _emailSenderMock.Verify(
-            s => s.SendOtpEmailAsync(email, It.IsAny<string>(), It.IsAny<DateTime>()),
+        // Verify message was published to "otp.generated" topic
+        _messageProducerMock.Verify(
+            p => p.SendMessageAsync(It.IsAny<object>(), "otp.generated"),
             Times.Once);
     }
 
@@ -80,7 +98,7 @@ public class OtpServiceTests
 
         var actualCode = entry!.Code;
 
-        // Act & Assert: should not throw
+        // Act & Assert - should not throw
         await service.ValidateOtpAsync(userId, transactionId, actualCode);
     }
 
@@ -100,7 +118,7 @@ public class OtpServiceTests
             service.ValidateOtpAsync(userId, transactionId, "000000"));
 
         // Assert
-        Assert.Equal("OTP is invalid.", ex.Message);
+        Assert.Equal("Invalid OTP.", ex.Message);
     }
 
     [Fact]
@@ -138,7 +156,7 @@ public class OtpServiceTests
             service.ValidateOtpAsync(userId, transactionId, "123456"));
 
         // Assert
-        Assert.Equal("OTP not found for this user and transaction.", ex.Message);
+        Assert.Equal("OTP not found or expired.", ex.Message);
     }
 
     [Fact]
@@ -167,6 +185,7 @@ public class OtpServiceTests
         var ex = await Assert.ThrowsAsync<KeyNotFoundException>(() =>
             service.ValidateOtpAsync(userId, transactionId, code));
 
-        Assert.Equal("OTP not found for this user and transaction.", ex.Message);
+        Assert.Equal("OTP not found or expired.", ex.Message);
     }
 }
+    

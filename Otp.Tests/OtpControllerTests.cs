@@ -1,8 +1,8 @@
 using System.Security.Claims;
-using Otp.Api.Controllers;
-using Otp.Api.Models;
-using Otp.Api.Models.Dtos;
-using Otp.Api.Services.Interfaces;
+using HrPayroll.OtpService.Controllers;
+using HrPayroll.OtpService.Models;
+using HrPayroll.OtpService.Models.Dtos;
+using HrPayroll.OtpService.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;

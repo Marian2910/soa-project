@@ -1,4 +1,4 @@
-using Otp.Api.Middleware;
+using HrPayroll.OtpService.Middleware;
 using Microsoft.Extensions.Hosting;
 using System.Net;
 using System.Text.Json;

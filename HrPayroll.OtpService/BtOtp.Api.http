@@ -1,0 +1,6 @@
+@BtHrPayroll.OtpService_HostAddress = http://localhost:5191
+
+GET {{BtHrPayroll.OtpService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

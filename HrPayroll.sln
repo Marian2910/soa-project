@@ -1,0 +1,46 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Otp.Tests", "Otp.Tests\Otp.Tests.csproj", "{EC9BDD73-2E8A-4C24-9AA1-0326D58A0409}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HrPayroll.Auth", "HrPayroll.Auth\HrPayroll.Auth.csproj", "{456939C5-4D6A-4397-A719-B59229F06311}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HrPayroll.Profile", "HrPayroll.Profile\HrPayroll.Profile.csproj", "{997365E7-B085-4D5B-8A9F-A5854A70F964}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HrPayroll.OtpService", "HrPayroll.OtpService\HrPayroll.OtpService.csproj", "{83DCCCB5-0DC6-4484-9403-F1FF519201D7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HrPayroll.Notifications", "HrPayroll.Notifications\HrPayroll.Notifications.csproj", "{9053CD79-E78F-4E53-A60D-518FBD67B02A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EC9BDD73-2E8A-4C24-9AA1-0326D58A0409}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC9BDD73-2E8A-4C24-9AA1-0326D58A0409}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC9BDD73-2E8A-4C24-9AA1-0326D58A0409}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC9BDD73-2E8A-4C24-9AA1-0326D58A0409}.Release|Any CPU.Build.0 = Release|Any CPU
+		{456939C5-4D6A-4397-A719-B59229F06311}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{456939C5-4D6A-4397-A719-B59229F06311}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{456939C5-4D6A-4397-A719-B59229F06311}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{456939C5-4D6A-4397-A719-B59229F06311}.Release|Any CPU.Build.0 = Release|Any CPU
+		{997365E7-B085-4D5B-8A9F-A5854A70F964}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{997365E7-B085-4D5B-8A9F-A5854A70F964}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{997365E7-B085-4D5B-8A9F-A5854A70F964}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{997365E7-B085-4D5B-8A9F-A5854A70F964}.Release|Any CPU.Build.0 = Release|Any CPU
+		{83DCCCB5-0DC6-4484-9403-F1FF519201D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{83DCCCB5-0DC6-4484-9403-F1FF519201D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{83DCCCB5-0DC6-4484-9403-F1FF519201D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{83DCCCB5-0DC6-4484-9403-F1FF519201D7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9053CD79-E78F-4E53-A60D-518FBD67B02A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9053CD79-E78F-4E53-A60D-518FBD67B02A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9053CD79-E78F-4E53-A60D-518FBD67B02A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9053CD79-E78F-4E53-A60D-518FBD67B02A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
