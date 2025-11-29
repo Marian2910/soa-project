@@ -1,24 +1,215 @@
-# Technical Challenge
+# Secure HR Payroll System (Microservices)
 
-## The problem
+A distributed, event-driven **microservices architecture** designed to
+simulate a high-security HR platform.\
+The system enables employees to securely update sensitive information
+(IBAN / Bank Details) using **Multi-Factor Authentication (OTP)**.
 
-Develop a system that can generate a one-time password for a banking application. The OTP system must be secure, efficient, and user-friendly to enhance the user experience and protect customers' data.
+------------------------------------------------------------------------
 
-## Business Requirements
+## Architecture Overview
 
-1. The OTP system must be secure to protect the confidential data of the customers. It must ensure that OTPs are generated randomly and are not predictable. Encryption during transmission of the OTPs should also be ensured.
-2. The OTPs should be time-bound. Once generated, an OTP should not be valid indefinitely. The system should automatically invalidate the OTP after a certain period of time that can be easily customized.
-3. The OTP input interface should be user-friendly. It should allow users to input the OTP easily without any confusion.
-4. The system should have good error handling. It should inform the user about any issues in a clear and understandable way.
-5. For the purpose of this exercise, the user should receive the OTP in a toast message that will be visible as long as the OTP is valid.
+This system follows a **Service-Oriented Architecture (SOA)**, splitting
+functionality into independently deployable microservices.
 
-## Techincal requirements
+### **Microservices**
 
-1. The solution must be a web application developed on the latest .NET framework.
-2. For the frontend part you can use any javascript framework you want.
-3. Unit tests must be performed with a test coverage of at least 70%.
+#### **HrPayroll.Auth**
 
-## Evaluation
-Your solution will be evaluated based on coding and testability standards, naming conventions, project structure and the meeting of requirements. It must be uploaded in a public github repository that can be accessed by us for validation.
+-   Handles user registration & login\
+-   Issues securely signed JWT tokens\
+-   Connects to **MongoDB**
 
- 
+#### **HrPayroll.Profile**
+
+-   Core business logic\
+-   Manages employee profiles and sensitive data updates\
+-   Acts as a **Gatekeeper**, verifying OTPs before allowing changes
+
+#### **HrPayroll.OtpService**
+
+-   Generates secure one-time passwords\
+-   Publishes `OtpGenerated` events to RabbitMQ
+
+#### **HrPayroll.Notifications**
+
+-   Background worker\
+-   Consumes messages from RabbitMQ\
+-   Simulates sending notification emails
+
+------------------------------------------------------------------------
+
+## Infrastructure & Messaging
+
+-   **RabbitMQ** -- async OTP email delivery (decoupled communication)\
+-   **Kafka** -- immutable event streaming for audit logs
+    (**non-repudiation**)\
+-   **MongoDB** -- stores users & profile data\
+-   **Nginx** -- API gateway + load balancer for micro-frontends\
+-   **Docker Compose** -- orchestrates entire environment
+
+------------------------------------------------------------------------
+
+## Project Requirements Checklist
+
+------------------------------------------------------------------------
+  Requirement                   Details                Status
+  ----------------------------- ---------------------- -------------------
+  **Build software system based Auth, Profile, OTP,    ✅ Done
+  on different types of         Notification           
+  services (\>2                                        
+  microservices)**                                     
+
+  **Web server exposing secured JWT authentication     ✅ Done
+  REST services**                                      
+
+  **Scalability using load      Nginx reverse proxy &  ✅ Done
+  balancers (Nginx)**           load balancer          
+
+  **Use message broker          OTP delivery events    ✅ Done
+  (RabbitMQ)**                                         
+
+  **Use event streaming         Audit logs             ✅ Done
+  (Kafka)**                     (`otp.validated`)      
+
+  **Use a FaaS**                Under integration      🚧 In Progress
+                                (audit lambda)         
+
+  **Web app consuming REST &    React MFE + RabbitMQ   🚧 In Progress
+  receiving server-side         consumer planned       
+  notifications**                                      
+
+  **Micro-frontend              Host App + Profile MFE 🚧 In Progress
+  architecture**                                       
+
+  **Containers deployment       Full docker-compose    ✅ Done
+  (Docker)**    
+                            
+  **Documentation (UML, C4)      C4 diagrams included  🚧 In Progress**                                      
+  ------------------------------------------------------------------------
+
+------------------------------------------------------------------------
+
+## Getting Started
+
+### **Prerequisites**
+
+-   Docker & Docker Compose\
+-   .NET 8 SDK
+
+------------------------------------------------------------------------
+
+### **1. Build the Solution**
+
+``` bash
+dotnet build
+```
+
+### **2. Start Infrastructure & Services**
+
+``` bash
+docker-compose up -d --build
+```
+
+------------------------------------------------------------------------
+
+## Access Points
+
+  Interface          URL                      Credentials
+  ------------------ ------------------------ ------------------
+  Mongo Express      http://localhost:8081    admin / password
+  RabbitMQ UI        http://localhost:15672   guest / guest
+  Frontend Gateway   http://localhost/        ---
+
+------------------------------------------------------------------------
+
+## Testing the API (Postman / Swagger)
+
+### **Step 1: Register User**
+
+    POST http://localhost:5001/api/auth/register
+
+Body:
+
+``` json
+{
+  "email": "dev@bt.ro",
+  "password": "pass",
+  "fullName": "Dev",
+  "iban": "RO59..."
+}
+```
+
+### **Step 2: Login & Get Token**
+
+    POST http://localhost:5001/api/auth/login
+
+Copy the JWT token.
+
+------------------------------------------------------------------------
+
+### **Step 3: Request IBAN Update**
+
+    POST http://localhost:5002/api/otp/request
+
+Headers:
+
+    Authorization: Bearer <TOKEN>
+
+Check the **HrPayroll.Notifications** terminal to retrieve the OTP code.
+
+------------------------------------------------------------------------
+
+### **Step 4: Confirm Update**
+
+    POST http://localhost:5003/api/profile/update-iban
+
+Body:
+
+``` json
+{
+  "newIban": "RO99...",
+  "otpCode": "123456",
+  "transactionId": "..."
+}
+```
+
+------------------------------------------------------------------------
+
+## 📐 System Diagram (C4 -- Container Level)
+
+``` mermaid
+graph TD
+    User((User))
+
+    subgraph "Docker Host"
+        Gateway[Nginx Gateway]
+
+        subgraph "Microservices"
+            Auth[HrPayroll.Auth]
+            Profile[HrPayroll.Profile]
+            Otp[HrPayroll.OtpService]
+            Notify[HrPayroll.Notifications]
+        end
+
+        subgraph "Data & Messaging"
+            Mongo[(MongoDB)]
+            Rabbit[RabbitMQ]
+            Kafka[Kafka]
+        end
+    end
+
+    User -->|HTTPS| Gateway
+    Gateway -->|/api/auth| Auth
+    Gateway -->|/api/profile| Profile
+    Gateway -->|/api/otp| Otp
+
+    Auth -->|Read/Write| Mongo
+    Profile -->|Read/Write| Mongo
+
+    Profile --HTTP--> Otp
+    Otp --Publish--> Rabbit
+    Rabbit --Consume--> Notify
+
+    Profile --Audit Log--> Kafka
+```
