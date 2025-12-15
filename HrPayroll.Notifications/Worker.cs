@@ -2,6 +2,8 @@ using System.Text;
 using System.Text.Json;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using MailKit.Net.Smtp;
+using MimeKit;
 
 namespace HrPayroll.Notifications;
 
@@ -32,34 +34,29 @@ public class Worker : BackgroundService
             _connection = await factory.CreateConnectionAsync();
             _channel = await _connection.CreateChannelAsync();
 
-            // 2. Declare Exchange (Must match Producer!)
             await _channel.ExchangeDeclareAsync(exchange: "otp_exchange", type: ExchangeType.Direct);
 
-            // 3. Declare Queue
             var queueName = "notification_email_queue";
             await _channel.QueueDeclareAsync(queue: queueName, durable: false, exclusive: false, autoDelete: false, arguments: null);
 
-            // 4. Bind Queue to Exchange (Routing Key: "otp.generated")
             await _channel.QueueBindAsync(queue: queueName, exchange: "otp_exchange", routingKey: "otp.generated");
 
             _logger.LogInformation("Connected to RabbitMQ. Waiting for messages...");
             
-            // 5. Setup Consumer
             var consumer = new AsyncEventingBasicConsumer(_channel);
             consumer.ReceivedAsync += async (model, ea) =>
             {
                 var body = ea.Body.ToArray();
-                var message = Encoding.UTF8.GetString(body);
+                var messageJson = Encoding.UTF8.GetString(body);
                 
                 try 
                 {
-                    // Parse the JSON (We just print it for now)
-                    using var doc = JsonDocument.Parse(message);
+                    using var doc = JsonDocument.Parse(messageJson);
                     var root = doc.RootElement;
-                    var email = root.GetProperty("Email").GetString();
+                    var emailTo = root.GetProperty("Email").GetString();
                     var code = root.GetProperty("Code").GetString();
 
-                    _logger.LogInformation($"📧 [EMAIL SENT] To: {email} | Code: {code}");
+                    await SendEmailAsync(emailTo, code);
                 }
                 catch (Exception ex)
                 {
@@ -77,9 +74,53 @@ public class Worker : BackgroundService
         await base.StartAsync(cancellationToken);
     }
 
+    private async Task SendEmailAsync(string? emailTo, string? code)
+    {
+        if (string.IsNullOrEmpty(emailTo) || string.IsNullOrEmpty(code)) return;
+
+        try 
+        {
+            var host = _configuration["Smtp:Host"];
+            var port = int.Parse(_configuration["Smtp:Port"] ?? "587");
+            var senderEmail = _configuration["Smtp:User"];
+            var senderPassword = _configuration["Smtp:Pass"];
+
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress("HR Payroll Security", senderEmail));
+            message.To.Add(new MailboxAddress("Employee", emailTo));
+            message.Subject = "Your Secure OTP Code";
+
+            var templatePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Templates", "OtpTemplate.html");
+            string emailBody;
+
+
+            var templateContent = await File.ReadAllTextAsync(templatePath);
+            emailBody = templateContent.Replace("{{OTP_CODE}}", code);
+
+            var builder = new BodyBuilder
+            {
+                HtmlBody = emailBody
+            };
+            
+            message.Body = builder.ToMessageBody();
+
+            using var client = new SmtpClient();
+            
+            await client.ConnectAsync(host, port, false);
+            await client.AuthenticateAsync(senderEmail, senderPassword);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
+
+            _logger.LogInformation($"Email sent to {emailTo} via Gmail!");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"SMTP Error: {ex.Message}");
+        }
+    }
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        // Keep the service alive
         while (!stoppingToken.IsCancellationRequested)
         {
             await Task.Delay(1000, stoppingToken);
