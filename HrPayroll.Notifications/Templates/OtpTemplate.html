@@ -1,140 +1,184 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #F7F7F5;
             margin: 0;
             padding: 0;
-            color: #1C1C1C;
+            background: #F3F4F6;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+            color: #111827;
         }
+
         .container {
             max-width: 600px;
-            margin: 40px auto;
-            background-color: #FFFFFF;
+            margin: 32px auto;
+            background: #FFFFFF;
+            border: 1px solid #E5E7EB;
             border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
             overflow: hidden;
-            border: 1px solid #e0e0e0;
         }
+
+        .top-accent {
+            height: 6px;
+            background: #4F46E5;
+        }
+
         .header {
-            background-color: #5833A6;
-            padding: 30px;
-            text-align: center;
+            padding: 18px 28px;
+            border-bottom: 1px solid #E5E7EB;
+            background: #FFFFFF;
         }
-        .header h1 {
-            margin: 0;
-            color: #FFFFFF;
-            font-size: 24px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-        .content {
-            padding: 40px 30px;
-            text-align: center;
-        }
-        .intro-text {
-            font-size: 16px;
-            line-height: 1.5;
-            margin-bottom: 30px;
-        }
-        .otp-wrapper {
-            background-color: #F7F7F5;
-            border: 2px dashed #8F3FA6;
-            border-radius: 8px;
-            display: inline-block;
-            padding: 20px 40px;
-            margin: 10px 0;
-        }
-        .otp-code {
-            color: #3F51B5;
-            font-size: 36px;
-            font-weight: 800;
-            letter-spacing: 8px;
-            margin: 0;
-            font-family: 'Courier New', Courier, monospace;
-        }
-        .copy-hint {
-            font-size: 12px;
-            color: #888;
-            margin-top: 8px;
-        }
-        .timer-warning {
-            color: #C13C9E;
-            font-weight: bold;
-            font-size: 14px;
-            margin-top: 30px;
+
+        .brand-row {
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 8px;
+            gap: 10px;
         }
-        .timer-icon {
-            background-color: #FFD400;
-            color: #8F3FA6;
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
+
+        .brand-mark {
+            width: 12px;
+            height: 12px;
+            border-radius: 4px;
+            /* change to 999px for a dot */
+            background: #4F46E5;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.12);
+            flex: 0 0 auto;
+        }
+
+        .brand-name {
             font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 0.2px;
+            color: #111827;
+            line-height: 1.2;
         }
+
+        .content {
+            padding: 28px;
+        }
+
+        h1 {
+            margin: 0 0 10px 0;
+            font-size: 20px;
+            font-weight: 800;
+            color: #111827;
+        }
+
+        .subtext {
+            margin: 0 0 18px 0;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #374151;
+        }
+
+        .otp-box {
+            margin: 18px 0 10px;
+            padding: 16px 18px;
+            background: #F9FAFB;
+            border: 1px solid #E5E7EB;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .otp-code {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace;
+            font-size: 28px;
+            font-weight: 900;
+            letter-spacing: 6px;
+            color: #111827;
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #6B7280;
+            margin: 0 0 16px 0;
+            text-align: center;
+        }
+
         .divider {
             height: 1px;
-            background-color: #eee;
-            margin: 30px 0;
+            background: #E5E7EB;
+            margin: 22px 0;
         }
-        .footer {
-            background-color: #1C1C1C;
-            color: #999;
-            padding: 20px;
-            text-align: center;
+
+        .notice {
+            padding: 12px 14px;
+            border-radius: 10px;
+            background: #FFF7ED;
+            border: 1px solid #FED7AA;
+            color: #7C2D12;
+            font-size: 13px;
+            line-height: 1.5;
+            margin-top: 18px;
+        }
+
+        .fineprint {
             font-size: 12px;
+            color: #6B7280;
+            line-height: 1.6;
+            margin: 16px 0 0 0;
         }
+
+        .footer {
+            padding: 18px 28px;
+            background: #F9FAFB;
+            border-top: 1px solid #E5E7EB;
+            font-size: 12px;
+            color: #6B7280;
+        }
+
         .footer p {
-            margin: 5px 0;
+            margin: 4px 0;
         }
     </style>
 </head>
+
 <body>
-<div class="container">
-    <div class="header">
-        <!-- You can replace this text with an <img src="..."> tag if you host your logo online -->
-        <h1>HR Payroll</h1>
-    </div>
+    <div class="container">
+        <div class="top-accent"></div>
 
-    <div class="content">
-        <p class="intro-text">
-            <strong>Hello,</strong><br>
-            A request has been made to update sensitive information on your profile.
-        </p>
-
-        <p>Use the verification code below to authorize this change:</p>
-
-        <div class="otp-wrapper">
-            <div class="otp-code">{{OTP_CODE}}</div>
-        </div>
-        <div class="copy-hint">Double-click code to copy</div>
-
-        <div class="timer-warning">
-            <span class="timer-icon">!</span>
-            <span>This code is valid for 2 minutes only.</span>
+        <div class="header">
+            <div class="brand-row">
+                <span class="brand-mark" aria-hidden="true"></span>
+                <span class="brand-name">HR Payroll</span>
+            </div>
         </div>
 
-        <div class="divider"></div>
+        <div class="content">
+            <h1>Verify your request</h1>
 
-        <p style="font-size: 13px; color: #666;">
-            If you did not initiate this request, please contact your Security Administrator immediately.
-        </p>
-    </div>
+            <p class="subtext">
+                Hello,<br>
+                We received a request to update sensitive information on your profile.
+                Use the verification code below to continue.
+            </p>
 
-    <div class="footer">
-        <p>&copy; 2025 HR Payroll System. Secure Environment.</p>
-        <p>Automated Notification • Do Not Reply</p>
+            <div class="otp-box">
+                <div class="otp-code">{{OTP_CODE}}</div>
+            </div>
+
+            <p class="hint">This code expires in 2 minutes.</p>
+
+            <div class="divider"></div>
+
+            <div class="notice">
+                If you didn’t request this change, please contact your Security Administrator immediately.
+            </div>
+
+            <p class="fineprint">
+                For your security, never share this code with anyone. HR Payroll staff will never ask for it.
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2025 HR Payroll System</p>
+            <p>Automated message • Do not reply</p>
+        </div>
     </div>
-</div>
 </body>
+
 </html>

@@ -1,47 +1,60 @@
-import "./App.css";
-import OtpRequestForm from "./components/OtpRequestForm";
-import OtpVerifyForm from "./components/OtpVerifyForm";
-import otpImage from "./assets/portal.png";
-import { Toaster, toast } from "react-hot-toast";
+import React, { useState } from "react";
+import OtpVerifier from "./components/OtpVerifier";
 
 function App() {
+  const [showTester, setShowTester] = useState(true);
+
+  // --- MOCK DATA FOR DEVELOPMENT ---
+  // In production, these come from the Host App (HR Payroll)
+  const mockProps = {
+    token: "mock-jwt-token-for-dev-testing", // Replace with real token if testing against real backend
+    email: "dev.user@company.com",
+    transactionId: "tx-12345-dev",
+    initialDuration: 60, // Short timer for quick testing
+  };
+
+  const handleSuccess = (code) => {
+    console.log(" OTP Verified via MFE:", code);
+    alert(`Success! Code ${code} passed validation.`);
+    setShowTester(false);
+  };
+
+  const handleCancel = () => {
+    console.log(" Transaction Cancelled by User");
+    alert("User clicked Cancel.");
+    setShowTester(false);
+  };
+
   return (
-    <div className="app-container">
-      {/* Branding / logo */}
-      <header className="app-header">
-        <div className="logo-title-container">
-          <img src={otpImage} className="logo" alt="Secure OTP Logo" />
-          <h1>One-Time Password Portal</h1>
-        </div>
-        <p className="subtitle">
-          Protect your account with a secure, time-sensitive OTP.
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
+      <div className="mb-8 text-center">
+        <h1 className="text-3xl font-bold text-gray-800 mb-2">
+          OTP Micro Frontend
+        </h1>
+        <p className="text-gray-500">
+          Running in Standalone Mode (Port 3001)
+          <br />
+          <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded">
+            Dev Environment
+          </span>
         </p>
-      </header>
+      </div>
 
-      {/* OTP request section */}
-      <section className="otp-section">
-        <h2>Request Your OTP</h2>
-        <p>
-          Enter your registered User ID to receive a one-time password. 
-          The OTP will be valid for 2 minutes only.
-        </p>
-        <OtpRequestForm />
-      </section>
-
-      <hr className="section-divider" />
-
-      {/* OTP verification section */}
-      <section className="otp-section">
-        <h2>Verify Your OTP</h2>
-        <p>
-          Already received an OTP? Enter your User ID and the code below to 
-          verify and complete your secure access.
-        </p>
-        <OtpVerifyForm/>
-      </section>
-
-      {/* Toast container */}
-      <Toaster position="bottom-center" reverseOrder={false} />
+      {showTester ? (
+        // This is the component that gets exported to the Host
+        <OtpVerifier
+          {...mockProps}
+          onSuccess={handleSuccess}
+          onCancel={handleCancel}
+        />
+      ) : (
+        <button
+          onClick={() => setShowTester(true)}
+          className="px-6 py-3 bg-brand-indigo text-white rounded-xl shadow-lg hover:bg-indigo-700 transition"
+        >
+          Reset Test
+        </button>
+      )}
     </div>
   );
 }

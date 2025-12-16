@@ -1,10 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MongoDB.Driver;
-using HrPayroll.Profile.Models;
+using HrPayroll.Auth.Models;
 using System.Security.Claims;
+using HrPayroll.Profile.Models;
 
-namespace HrPayroll.Profile.Controllers;
+namespace HrPayroll.Auth.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -40,7 +41,7 @@ public class ProfileController : ControllerBase
         {
             FullName = user.FullName,
             Email = user.Email,
-            Iban = user.Iban // In real app, maybe mask this like ****1234
+            Iban = user.Iban
         });
     }
 
