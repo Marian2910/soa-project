@@ -19,12 +19,9 @@ functionality into independently deployable microservices.
 - Handles user registration & login\
 - Issues securely signed JWT tokens\
 - Connects to **MongoDB**
-
-#### **HrPayroll.Profile**
-
 - Core business logic\
-- Manages employee profiles and sensitive data updates\
-- Acts as a **Gatekeeper**, verifying OTPs before allowing changes
+  - Manages employee profiles and sensitive data updates\
+  - Acts as a **Gatekeeper**, verifying OTPs before allowing changes
 
 #### **HrPayroll.OtpService**
 
