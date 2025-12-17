@@ -75,7 +75,7 @@ balancers (Nginx)** load balancer
 **Use a FaaS** Under integration 🚧 In Progress
 (audit lambda)
 
-**Web app consuming REST & React MFE + RabbitMQ 🚧 In Progress
+**Web app consuming REST & React MFE + RabbitMQ ✅ Done
 receiving server-side consumer planned  
  notifications**
 
@@ -209,10 +209,8 @@ graph TD
 
     Auth -->|Read/Write| Mongo
     Profile -->|Read/Write| Mongo
-
-    Profile --HTTP--> Otp
     Otp --Publish--> Rabbit
     Rabbit --Consume--> Notify
 
-Profile --Audit Log--> Kafka
+Auth --Audit Log--> Kafka
 ```
