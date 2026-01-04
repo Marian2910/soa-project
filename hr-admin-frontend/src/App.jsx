@@ -2,14 +2,13 @@ import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
-// Pages
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
-import Profile from "./pages/Profile"; // New Import
-import History from "./pages/History"; // New Import
+import Profile from "./pages/Profile";
+import History from "./pages/History";
+import OtpPage from "./pages/OtpPage";
 
-// Security Wrappers
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
   return user ? children : <Navigate to="/login" replace />;
@@ -25,7 +24,6 @@ const App = () => {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          {/* Public Routes */}
           <Route
             path="/login"
             element={
@@ -43,7 +41,6 @@ const App = () => {
             }
           />
 
-          {/* Protected Routes (Sidebar Links) */}
           <Route
             path="/dashboard"
             element={
@@ -69,7 +66,15 @@ const App = () => {
             }
           />
 
-          {/* Fallback */}
+          <Route
+            path="/verify-identity"
+            element={
+              <ProtectedRoute>
+                <OtpPage />{" "}
+              </ProtectedRoute>
+            }
+          />
+
           <Route path="/" element={<Navigate to="/login" />} />
           <Route path="*" element={<Navigate to="/login" />} />
         </Routes>

@@ -1,6 +1,6 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -8,18 +8,18 @@ const Navbar = () => {
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate("/login");
   };
 
   return (
     <nav className="bg-[#3F51B5] shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
-          {/* Logo / Brand */}
           <div className="flex items-center">
             <Link to="/" className="flex-shrink-0 flex items-center">
               <span className="text-white text-xl font-bold tracking-wider">
-                HrPayroll <span className="text-[#FFD400] text-xs align-top">SYS</span>
+                HrPayroll{" "}
+                <span className="text-[#FFD400] text-xs align-top">SYS</span>
               </span>
             </Link>
           </div>
@@ -29,10 +29,10 @@ const Navbar = () => {
             {user ? (
               <>
                 <span className="text-indigo-100 text-sm hidden md:block">
-                  Welcome, {user.fullName || 'Employee'}
+                  Welcome, {user.fullName || "Employee"}
                 </span>
-                <Link 
-                  to="/dashboard" 
+                <Link
+                  to="/dashboard"
                   className="text-white hover:bg-[#303f9f] px-3 py-2 rounded-md text-sm font-medium"
                 >
                   Dashboard

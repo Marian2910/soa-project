@@ -1,13 +1,16 @@
 import authApi from './axios';
 
 export const ProfileService = {
-  // Get current logged-in user details
   getProfile: async () => {
     const response = await authApi.get('/profile/me');
     return response.data;
   },
 
-  // The critical secure action: Send new IBAN + OTP Code + TransactionID
+  getFinancials: async () => {
+    const response = await authApi.get('/profile/financials');
+    return response.data;
+  },
+  
   updateIban: async (newIban, otpCode, transactionId) => {
     const response = await authApi.post('/profile/update-iban', {
       newIban,
@@ -19,13 +22,11 @@ export const ProfileService = {
 };
 
 export const OtpService = {
-  // Trigger the email generation via RabbitMQ
   requestOtp: async () => {
     const response = await authApi.post('/otp/request');
-    return response.data; // Should return { transactionId: "..." }
+    return response.data;
   },
 
-  // Direct verification (used if you implement a standalone OTP check)
   verifyOtp: async (transactionId, code) => {
     const response = await authApi.post('/otp/verify', {
       transactionId,

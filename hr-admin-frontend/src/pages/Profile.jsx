@@ -6,9 +6,11 @@ import { FiUser, FiMail, FiShield, FiCreditCard } from "react-icons/fi";
 
 const Profile = () => {
   const [user, setUser] = useState(null);
+  const [financials, setFinancials] = useState(null);
 
   useEffect(() => {
     ProfileService.getProfile().then(setUser).catch(console.error);
+    ProfileService.getFinancials().then(setFinancials).catch(console.error);
   }, []);
 
   if (!user)
@@ -29,12 +31,14 @@ const Profile = () => {
         </header>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          {/* Header Background */}
-          <div className="h-32 bg-gradient-to-r from-brand-indigo to-brand-magenta"></div>
+          <div className="h-32 bg-gradient-to-r from-brand-indigo to-brand-magenta flex items-center px-8">
+            <h2 className="text-white text-3xl font-bold tracking-tight">
+              {financials?.jobTitle}
+            </h2>
+          </div>
 
           <div className="px-8 pb-8 relative">
             <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Personal Info */}
               <div className="space-y-6">
                 <h3 className="text-lg font-bold text-gray-800 border-b pb-2">
                   Personal Information
@@ -65,7 +69,6 @@ const Profile = () => {
                 </div>
               </div>
 
-              {/* Financial Info */}
               <div className="space-y-6">
                 <h3 className="text-lg font-bold text-gray-800 border-b pb-2">
                   Financial Security
@@ -94,7 +97,7 @@ const Profile = () => {
                       Account Status
                     </p>
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      Verified & Active
+                      {financials?.employmentStatus}
                     </span>
                   </div>
                 </div>

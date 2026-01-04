@@ -1,7 +1,7 @@
+using HrPayroll.Auth.Models;
+using HrPayroll.Auth.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using MongoDB.Driver;
-using HrPayroll.Auth.Models;
 using System.Security.Claims;
 using HrPayroll.Profile.Models;
 
@@ -9,66 +9,49 @@ namespace HrPayroll.Auth.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-[Authorize] // Protected by JWT
+[Authorize]
 public class ProfileController : ControllerBase
 {
-    private readonly IMongoCollection<User> _users;
-    private readonly HttpClient _httpClient;
-    private readonly IConfiguration _config;
+    private readonly IProfileService _profileService;
 
-    public ProfileController(IConfiguration config, IHttpClientFactory httpClientFactory)
+    public ProfileController(IProfileService profileService)
     {
-        _config = config;
-        _httpClient = httpClientFactory.CreateClient("OtpClient");
-
-        // Connect to the SAME MongoDB as AuthService
-        var mongoUrl = _config["MongoDb:ConnectionString"] ?? "mongodb://admin:password@localhost:27017";
-        var client = new MongoClient(mongoUrl);
-        var db = client.GetDatabase("HrPayrollDb");
-        _users = db.GetCollection<User>("Users");
+        _profileService = profileService;
     }
+
+    private string GetUserId() =>
+        User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+        ?? throw new UnauthorizedAccessException("User not authenticated.");
 
     [HttpGet("me")]
     public async Task<IActionResult> GetMyProfile()
     {
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (userId == null) return Unauthorized();
+        var userId = GetUserId();
+        var profile = await _profileService.GetProfileAsync(userId);
+        return Ok(profile);
+    }
 
-        var user = await _users.Find(u => u.Id == userId).FirstOrDefaultAsync();
-        if (user == null) return NotFound("User not found.");
+    [HttpGet("financials")]
+    public async Task<IActionResult> GetMyFinancials()
+    {
+        var userId = GetUserId();
+        var financials = await _profileService.GetFinancialsAsync(userId);
+        return Ok(financials);
+    }
 
-        return Ok(new UserProfileDto
-        {
-            FullName = user.FullName,
-            Email = user.Email,
-            Iban = user.Iban
-        });
+    [HttpPost("request-iban-change")]
+    public async Task<IActionResult> RequestIbanChange([FromBody] RequestIbanChangeDto request)
+    {
+        var userId = GetUserId();
+        var transactionId = await _profileService.RequestIbanChangeAsync(userId, request.NewIban);
+        return Ok(new { transactionId });
     }
 
     [HttpPost("update-iban")]
     public async Task<IActionResult> UpdateIban([FromBody] UpdateIbanRequest request)
     {
-        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        // 1. Verify OTP with OtpService
-        // We make an internal HTTP call to the OTP microservice
-        var verifyPayload = new OtpVerifyRequest 
-        { 
-            TransactionId = request.TransactionId, 
-            Code = request.OtpCode 
-        };
-
-        var response = await _httpClient.PostAsJsonAsync("/api/otp/verify", verifyPayload);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            return BadRequest(new { message = "Invalid or expired OTP. Update rejected." });
-        }
-
-        // 2. If we get here, OTP is valid. Update the Database.
-        var update = Builders<User>.Update.Set(u => u.Iban, request.NewIban);
-        await _users.UpdateOneAsync(u => u.Id == userId, update);
-
+        var userId = GetUserId();
+        await _profileService.UpdateIbanAsync(userId, request.NewIban, request.TransactionId, request.OtpCode);
         return Ok(new { message = "IBAN updated successfully!" });
     }
 }

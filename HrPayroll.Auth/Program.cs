@@ -1,4 +1,6 @@
 using System.Text;
+using HrPayroll.Auth.Middleware;
+using HrPayroll.Auth.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
@@ -22,10 +24,19 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+// HttpClient for OTP microservice
 builder.Services.AddHttpClient("OtpClient", client =>
 {
-    var otpUrl = builder.Configuration["Services:OtpServiceUrl"] ?? "http://localhost:5002"; 
+    var otpUrl = builder.Configuration["Services:OtpServiceUrl"] ?? "http://localhost:5002";
     client.BaseAddress = new Uri(otpUrl);
+});
+
+builder.Services.AddScoped<IProfileService, ProfileService>(); 
+builder.Services.AddScoped<IAuthService, AuthService>();
+
+builder.Services.AddHttpClient("OtpClient", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["Services:OtpServiceUrl"] ?? "http://localhost:5002");
 });
 
 builder.Services.AddControllers();
@@ -49,12 +60,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseMiddleware<ExceptionMiddleware>();
 
 app.UseHttpsRedirection();
 
 app.UseCors("AllowAll");
 
-app.UseAuthentication(); 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

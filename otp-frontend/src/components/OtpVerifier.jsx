@@ -7,12 +7,12 @@ const OtpVerifier = ({
   token,
   email,
   transactionId,
-  initialDuration = 120, // Default if not provided
+  initialDuration = 240,
   onSuccess,
   onCancel,
 }) => {
   // --- State ---
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]); // Array for 6 boxes
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [timeLeft, setTimeLeft] = useState(initialDuration);
   const [currentTxId, setCurrentTxId] = useState(transactionId);
   const [status, setStatus] = useState("IDLE"); // IDLE, VERIFYING, RESENDING, ERROR, SUCCESS

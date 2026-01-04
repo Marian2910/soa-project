@@ -26,8 +26,7 @@ const Login = () => {
         <div className="relative z-10 text-white text-center px-12">
           <h1 className="text-5xl font-bold mb-6">Secure Payroll</h1>
           <p className="text-indigo-100 text-xl font-light">
-            Manage your finances securely with our next-gen University HR
-            system.
+            Manage your finances securely with our next-gen HR system.
           </p>
         </div>
       </div>
@@ -36,7 +35,7 @@ const Login = () => {
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-brand-gray">
         <div className="max-w-md w-full bg-white p-10 rounded-2xl shadow-xl border border-gray-100">
           <div className="text-center mb-10">
-            <img src={logo} alt="Logo" className="h-12 mx-auto mb-4" />
+            <img src={logo} alt="Logo" className="h-40 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900">Welcome Back</h2>
             <p className="text-gray-500 text-sm">
               Please sign in to access your dashboard.

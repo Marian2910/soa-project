@@ -1,137 +1,158 @@
 import React, { useState, useEffect } from "react";
 import { ProfileService, OtpService } from "../api/services";
-import { maskIban } from "../utils/formatters";
+import { maskIban, formatCurrency, formatDate } from "../utils/formatters";
 import Layout from "../components/Layout";
+import { useNavigate } from "react-router-dom";
 import {
   FiRefreshCw,
   FiShield,
-  FiDollarSign,
   FiCalendar,
   FiCheckCircle,
 } from "react-icons/fi";
+import { MdOutlinePayments } from "react-icons/md";
 
 const Dashboard = () => {
   const [user, setUser] = useState(null);
+  const [financials, setFinancials] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({ newIban: "", otpCode: "" });
-  const [transactionId, setTransactionId] = useState(null);
   const [processLoading, setProcessLoading] = useState(false);
-  const [modalMessage, setModalMessage] = useState({ type: "", text: "" });
-  const OtpVerifier = React.lazy(() => import("otp_app/OtpVerifier"));
+  const [modalMessage, setModalMessage] = useState(null);
+
+  const [newIban, setNewIban] = useState("");
+  const [ibanError, setIbanError] = useState("");
+
+  const navigate = useNavigate();
 
   useEffect(() => {
-    fetchProfile();
+    fetchData();
   }, []);
 
-  const fetchProfile = async () => {
+  const fetchData = async () => {
     try {
-      const data = await ProfileService.getProfile();
-      setUser(data);
+      const [userData, financialData] = await Promise.all([
+        ProfileService.getProfile(),
+        ProfileService.getFinancials(),
+      ]);
+      setUser(userData);
+      setFinancials(financialData);
     } catch (err) {
-      console.error("Failed to fetch profile", err);
+      console.error("Failed to fetch dashboard data", err);
     } finally {
       setLoading(false);
     }
   };
 
+  const isValidIban = (iban) => {
+    if (!iban) return false;
+    const normalized = iban.replace(/\s+/g, "").toUpperCase();
+    const ibanRegex = /^[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}$/;
+    return ibanRegex.test(normalized);
+  };
+
   const openModal = () => {
-    setStep(1);
-    setFormData({ newIban: "", otpCode: "" });
-    setModalMessage({ type: "", text: "" });
+    setNewIban("");
+    setIbanError("");
+    setModalMessage(null);
     setIsModalOpen(true);
   };
 
   const handleRequestOtp = async (e) => {
     e.preventDefault();
-    setProcessLoading(true);
-    setModalMessage({ type: "", text: "" });
 
-    try {
-      const response = await OtpService.requestOtp();
-      if (response.transactionId) setTransactionId(response.transactionId);
-      setStep(2);
-      setModalMessage({ type: "success", text: "OTP sent to your email!" });
-    } catch (err) {
-      setModalMessage({ type: "error", text: "Failed to send OTP." });
-    } finally {
-      setProcessLoading(false);
+    if (!isValidIban(newIban)) {
+      setIbanError("Please enter a valid IBAN.");
+      return;
     }
-  };
 
-  const handleFinalizeUpdate = async (e) => {
-    e.preventDefault();
     setProcessLoading(true);
+    setModalMessage(null);
 
     try {
-      await ProfileService.updateIban(
-        formData.newIban,
-        formData.otpCode,
-        transactionId
-      );
-      await fetchProfile();
+      const response = await OtpService.requestOtp({
+        purpose: "IBAN_CHANGE",
+        newIban: newIban.replace(/\s+/g, ""),
+      });
+
       setIsModalOpen(false);
-      alert("IBAN Updated Successfully!");
+
+      navigate("/verify-identity", {
+        state: {
+          email: user.email,
+          transactionId: response.transactionId,
+          newIban: newIban.replace(/\s+/g, ""),
+        },
+      });
     } catch (err) {
-      setModalMessage({ type: "error", text: "Invalid OTP or Failed." });
+      setModalMessage({
+        type: "error",
+        text: "Failed to send OTP. Please try again.",
+      });
     } finally {
       setProcessLoading(false);
     }
   };
 
-  if (loading)
+  if (loading) {
     return (
       <div className="flex h-screen items-center justify-center text-brand-indigo font-medium">
         Loading Dashboard...
       </div>
     );
+  }
 
   return (
     <Layout>
       <header className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900">
-          Hello, {user?.fullName?.split(" ")[0]}
+          Hello, {user?.fullName?.split(" ")[1]}
         </h1>
         <p className="text-gray-500 mt-1">Here is your financial overview.</p>
       </header>
 
-      {/* METRIC CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        {/* Card 1 */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-gray-400 uppercase">
               Next Payout
             </p>
-            <p className="text-2xl font-bold text-gray-900 mt-1">Dec 25</p>
+            <p className="text-2xl font-bold text-gray-900 mt-1">
+              {financials ? formatDate(financials.nextPayDate) : "N/A"}
+            </p>
           </div>
           <div className="p-3 bg-indigo-50 text-brand-indigo rounded-full">
             <FiCalendar size={24} />
           </div>
         </div>
 
-        {/* Card 2 */}
         <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between">
           <div>
             <p className="text-sm font-medium text-gray-400 uppercase">
-              Net Salary
+              Base Salary
             </p>
-            <p className="text-2xl font-bold text-gray-900 mt-1">$4,250</p>
+            <p className="text-2xl font-bold text-gray-900 mt-1">
+              {financials
+                ? formatCurrency(financials.baseSalary, financials.currency)
+                : "N/A"}
+            </p>
           </div>
           <div className="p-3 bg-green-50 text-green-600 rounded-full">
-            <FiDollarSign size={24} />
+            <MdOutlinePayments size={24} />
           </div>
         </div>
 
-        {/* Card 3 - Status */}
         <div className="bg-gradient-to-br from-brand-indigo to-brand-magenta p-6 rounded-2xl shadow-lg text-white flex items-center justify-between">
           <div>
             <p className="text-indigo-100 text-sm font-medium uppercase">
               Employee Status
             </p>
-            <p className="text-2xl font-bold mt-1">Active</p>
+            <p className="text-2xl font-bold mt-1">
+              {financials?.employmentStatus || "Unknown"}
+            </p>
+            <p className="text-xs text-indigo-200 mt-1">
+              {financials?.jobTitle}
+            </p>
           </div>
           <div className="p-3 bg-white/20 rounded-full">
             <FiCheckCircle size={24} />
@@ -139,7 +160,6 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* IBAN SECTION */}
       <section className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
         <div className="px-6 py-4 border-b border-gray-50 bg-gray-50/50 flex items-center gap-2">
           <FiShield className="text-brand-magenta" />
@@ -170,22 +190,19 @@ const Dashboard = () => {
         </div>
       </section>
 
-      {/* MODAL (Re-styled) */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto">
           <div className="flex items-center justify-center min-h-screen px-4">
             <div
-              className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity"
+              className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm"
               onClick={() => setIsModalOpen(false)}
-            ></div>
-
-            <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 overflow-hidden">
+            />
+            <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
               <h3 className="text-xl font-bold text-gray-900 mb-2">
-                {step === 1 ? "Request Change" : "Security Check"}
+                Request IBAN Change
               </h3>
 
-              {/* Message Banner */}
-              {modalMessage.text && (
+              {modalMessage && (
                 <div
                   className={`p-3 rounded-lg text-sm mb-4 ${
                     modalMessage.type === "error"
@@ -197,69 +214,48 @@ const Dashboard = () => {
                 </div>
               )}
 
-              {/* STEP 1 FORM */}
-              {step === 1 && (
-                <form onSubmit={handleRequestOtp} className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      New IBAN
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      className="block w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-indigo outline-none"
-                      value={formData.newIban}
-                      onChange={(e) =>
-                        setFormData({ ...formData, newIban: e.target.value })
-                      }
-                      placeholder="RO..."
-                    />
-                  </div>
-                  <div className="flex gap-3 mt-6">
-                    <button
-                      type="button"
-                      onClick={() => setIsModalOpen(false)}
-                      className="flex-1 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={processLoading}
-                      className="flex-1 py-3 bg-brand-indigo text-white rounded-xl font-medium hover:bg-indigo-700 shadow-lg shadow-indigo-500/30"
-                    >
-                      {processLoading ? "Sending..." : "Next"}
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              {/* STEP 2 FORM */}
-              {step === 2 && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
-                  <React.Suspense
-                    fallback={
-                      <div className="text-white">
-                        Loading Security Module...
-                      </div>
-                    }
-                  >
-                    <OtpVerifier
-                      token={user.token}
-                      email={user.email}
-                      transactionId={transactionId}
-                      initialDuration={120}
-                      onSuccess={(code) => {
-                        handleFinalizeUpdate(code);
-                      }}
-                      onCancel={() => {
-                        setIsModalOpen(false);
-                        setStep(1);
-                      }}
-                    />
-                  </React.Suspense>
+              <form onSubmit={handleRequestOtp} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    New IBAN
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newIban}
+                    onChange={(e) => {
+                      setNewIban(e.target.value.toUpperCase());
+                      setIbanError("");
+                    }}
+                    placeholder="RO..."
+                    className={`block w-full px-4 py-3 border rounded-xl outline-none ${
+                      ibanError
+                        ? "border-red-300 focus:ring-red-200"
+                        : "border-gray-200 focus:ring-brand-indigo"
+                    }`}
+                  />
+                  {ibanError && (
+                    <p className="text-sm text-red-500 mt-1">{ibanError}</p>
+                  )}
                 </div>
-              )}
+
+                <div className="flex gap-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="flex-1 py-3 text-gray-600 hover:bg-gray-50 rounded-xl font-medium"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={processLoading}
+                    className="flex-1 py-3 bg-brand-indigo text-white rounded-xl font-medium hover:bg-indigo-700 disabled:opacity-50"
+                  >
+                    {processLoading ? "Sending..." : "Next"}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </div>

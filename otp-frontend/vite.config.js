@@ -1,24 +1,25 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-import federation from '@originjs/vite-plugin-federation';
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+import federation from "@originjs/vite-plugin-federation";
 
 export default defineConfig({
   plugins: [
     react(),
     federation({
-      name: 'otp_app',
-      filename: 'remoteEntry.js',
+      name: "otp_app",
+      filename: "remoteEntry.js",
       exposes: {
-        './OtpVerifier': './src/components/OtpVerifier.jsx',
+        "./OtpVerifier": "./src/OtpVerifier.jsx",
       },
-      shared: ['react', 'react-dom', 'axios']
-    })
+      shared: ["react", "react-dom"],
+    }),
   ],
   build: {
-    target: 'esnext'
+    target: "esnext",
+    minify: false,
+    cssCodeSplit: false,
   },
   server: {
     port: 3001,
-    cors: true
-  }
+  },
 });

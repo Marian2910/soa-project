@@ -1,8 +1,7 @@
-import React from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FiGrid, FiUser, FiLogOut, FiPieChart } from "react-icons/fi"; // Feather Icons
-import logo from "../assets/logo.png"; // Ensure this file exists
+import { FiGrid, FiUser, FiLogOut, FiPieChart } from "react-icons/fi";
+import logo from "../assets/logo.png";
 
 const Layout = ({ children }) => {
   const { user, logout } = useAuth();
@@ -11,8 +10,8 @@ const Layout = ({ children }) => {
 
   const menuItems = [
     { label: "Dashboard", path: "/dashboard", icon: <FiGrid /> },
-    { label: "My Profile", path: "/profile", icon: <FiUser /> }, // Placeholder route
-    { label: "Payroll History", path: "/history", icon: <FiPieChart /> }, // Placeholder route
+    { label: "My Profile", path: "/profile", icon: <FiUser /> },
+    { label: "Payroll History", path: "/history", icon: <FiPieChart /> },
   ];
 
   return (

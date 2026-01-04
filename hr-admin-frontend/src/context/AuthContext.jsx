@@ -8,11 +8,8 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [loading, setLoading] = useState(true);
 
-  // Check if user is already logged in on app start
   useEffect(() => {
     if (token) {
-      // Optional: Validate token or fetch user profile here
-      // For now, we assume if token exists, they are "logged in"
       setUser({ token }); 
     }
     setLoading(false);
@@ -23,7 +20,6 @@ export const AuthProvider = ({ children }) => {
       const response = await authApi.post('/auth/login', { username, password });
       const { token, fullName, iban } = response.data;
       
-      // Save critical data
       localStorage.setItem('token', token);
       setToken(token);
       setUser({ fullName, iban });
