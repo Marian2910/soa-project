@@ -7,7 +7,6 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import History from "./pages/History";
-import OtpPage from "./pages/OtpPage";
 
 const ProtectedRoute = ({ children }) => {
   const { user } = useAuth();
@@ -62,15 +61,6 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <History />
-              </ProtectedRoute>
-            }
-          />
-
-          <Route
-            path="/verify-identity"
-            element={
-              <ProtectedRoute>
-                <OtpPage />{" "}
               </ProtectedRoute>
             }
           />

@@ -1,33 +1,27 @@
-export async function requestOtp(transactionId) {
-  const token = localStorage.getItem("token");
-  const res = await fetch("/api/otp/request", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ transactionId, purpose: "iban_update" }),
-  });
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.message || "OTP request failed");
-  }
-  return res.json();
-}
+import axios from "axios";
 
-export async function verifyOtp(transactionId, code) {
-  const token = localStorage.getItem("token");
-  const res = await fetch("/api/otp/verify", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ transactionId, code }),
-  });
-  if (!res.ok) {
-    const err = await res.json();
-    throw new Error(err.message || "OTP verification failed");
+const api = axios.create({
+  baseURL: "http://localhost:5062/api",
+  headers: { "Content-Type": "application/json" },
+});
+
+export const setAuthToken = (token) => {
+  if (token) {
+    api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+  } else {
+    delete api.defaults.headers.common["Authorization"];
   }
-  return res.json();
-}
+};
+
+export const finalizeUpdate = async (transactionId, code) => {
+  const response = await api.post("/profile/finalize-update", {
+    transactionId,
+    code,
+  });
+  return response.data;
+};
+
+export const resendOtp = async (transactionId) => {
+  const response = await api.post("/profile/resend-otp", { transactionId });
+  return response.data;
+};

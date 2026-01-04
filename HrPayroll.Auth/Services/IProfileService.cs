@@ -7,6 +7,7 @@ public interface IProfileService
 {
     Task<UserProfileDto> GetProfileAsync(string userId);
     Task<EmployeeFinancials?> GetFinancialsAsync(string userId);
-    Task<string> RequestIbanChangeAsync(string userId, string newIban);
-    Task UpdateIbanAsync(string userId, string newIban, string transactionId, string otpCode);
+    Task<string> InitiateIbanUpdateAsync(string userId, string newIban);
+    Task FinalizeIbanUpdateAsync(string userId, string transactionId, string otpCode);
+    Task ResendOtpAsync(string userId, string transactionId);
 }

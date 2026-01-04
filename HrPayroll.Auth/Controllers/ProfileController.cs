@@ -3,7 +3,6 @@ using HrPayroll.Auth.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using HrPayroll.Profile.Models;
 
 namespace HrPayroll.Auth.Controllers;
 
@@ -21,6 +20,7 @@ public class ProfileController : ControllerBase
 
     private string GetUserId() =>
         User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+        ?? User.FindFirst("sub")?.Value
         ?? throw new UnauthorizedAccessException("User not authenticated.");
 
     [HttpGet("me")]
@@ -36,22 +36,34 @@ public class ProfileController : ControllerBase
     {
         var userId = GetUserId();
         var financials = await _profileService.GetFinancialsAsync(userId);
+        
+        if (financials == null)
+            return NotFound(new { message = "Financial records not found." });
+
         return Ok(financials);
     }
 
-    [HttpPost("request-iban-change")]
-    public async Task<IActionResult> RequestIbanChange([FromBody] RequestIbanChangeDto request)
+    [HttpPost("initiate-update")]
+    public async Task<IActionResult> InitiateUpdate([FromBody] InitiateUpdateDto request)
     {
         var userId = GetUserId();
-        var transactionId = await _profileService.RequestIbanChangeAsync(userId, request.NewIban);
+        var transactionId = await _profileService.InitiateIbanUpdateAsync(userId, request.NewIban);
         return Ok(new { transactionId });
     }
 
-    [HttpPost("update-iban")]
-    public async Task<IActionResult> UpdateIban([FromBody] UpdateIbanRequest request)
+    [HttpPost("finalize-update")]
+    public async Task<IActionResult> FinalizeUpdate([FromBody] OtpVerifyRequest request)
     {
         var userId = GetUserId();
-        await _profileService.UpdateIbanAsync(userId, request.NewIban, request.TransactionId, request.OtpCode);
+        await _profileService.FinalizeIbanUpdateAsync(userId, request.TransactionId, request.Code);
         return Ok(new { message = "IBAN updated successfully!" });
+    }
+
+    [HttpPost("resend-otp")]
+    public async Task<IActionResult> ResendOtp([FromBody] ResendOtpDto request)
+    {
+        var userId = GetUserId();
+        await _profileService.ResendOtpAsync(userId, request.TransactionId);
+        return Ok(new { message = "OTP resent." });
     }
 }

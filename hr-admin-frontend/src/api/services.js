@@ -11,18 +11,9 @@ export const ProfileService = {
     return response.data;
   },
 
-  requestIbanChange: async (newIban) => {
-    const response = await authApi.post("/profile/request-iban-change", {
+  initiateIbanUpdate: async (newIban) => {
+    const response = await authApi.post("/profile/initiate-update", {
       newIban,
-    });
-    return response.data;
-  },
-
-  updateIban: async (newIban, otpCode, transactionId) => {
-    const response = await authApi.post("/profile/update-iban", {
-      newIban,
-      otpCode,
-      transactionId,
     });
     return response.data;
   },

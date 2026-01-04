@@ -42,7 +42,6 @@ public class OtpController : ControllerBase
 
         var (userId, email) = GetUserIdentity();
 
-        // we expect OTP service to take care of email sending
         var otpResponse = await _otpService.IssueOtpAsync(userId, email, request.TransactionId, request.Purpose);
 
         return Ok(otpResponse);
