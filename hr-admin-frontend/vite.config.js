@@ -8,7 +8,7 @@ export default defineConfig({
     federation({
       name: "hr_admin",
       remotes: {
-        otp_app: "http://localhost:3001/assets/remoteEntry.js",
+        otp_app: "http://localhost:4173/assets/remoteEntry.js",
       },
       shared: {
         react: { singleton: true },
@@ -17,6 +17,10 @@ export default defineConfig({
       },
     }),
   ],
+  server: {
+    port: 5173,
+    cors: true,
+  },
   build: {
     target: "esnext",
   },

@@ -27,17 +27,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // HttpClient for OTP microservice
 builder.Services.AddHttpClient("OtpClient", client =>
 {
-    var otpUrl = builder.Configuration["Services:OtpServiceUrl"] ?? "http://localhost:5002";
+    var otpUrl = builder.Configuration["Services:OtpServiceUrl"] ?? "http://localhost:5191";
     client.BaseAddress = new Uri(otpUrl);
 });
 
 builder.Services.AddScoped<IProfileService, ProfileService>(); 
 builder.Services.AddScoped<IAuthService, AuthService>();
-
-builder.Services.AddHttpClient("OtpClient", client =>
-{
-    client.BaseAddress = new Uri(builder.Configuration["Services:OtpServiceUrl"] ?? "http://localhost:5002");
-});
+builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();

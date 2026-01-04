@@ -1,51 +1,59 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
-import authApi from '../api/axios';
+import React, { createContext, useState, useEffect, useContext } from "react";
+import authApi from "../api/axios";
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token'));
+  const [token, setToken] = useState(localStorage.getItem("token"));
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const storedName = localStorage.getItem("fullName");
+
     if (token) {
-      setUser({ token }); 
+      setUser({ token, fullName: storedName });
     }
     setLoading(false);
   }, [token]);
 
   const login = async (username, password) => {
     try {
-      const response = await authApi.post('/auth/login', { username, password });
+      const response = await authApi.post("/auth/login", {
+        username,
+        password,
+      });
       const { token, fullName, iban } = response.data;
-      
-      localStorage.setItem('token', token);
+
+      localStorage.setItem("token", token);
+      localStorage.setItem("fullName", fullName);
+
       setToken(token);
-      setUser({ fullName, iban });
+      setUser({ token, fullName, iban });
       return { success: true };
     } catch (error) {
-      return { 
-        success: false, 
-        message: error.response?.data?.message || 'Login failed' 
+      return {
+        success: false,
+        message: error.response?.data?.message || "Login failed",
       };
     }
   };
 
   const register = async (userData) => {
     try {
-      await authApi.post('/auth/register', userData);
+      await authApi.post("/auth/register", userData);
       return { success: true };
     } catch (error) {
-      return { 
-        success: false, 
-        message: error.response?.data?.message || 'Registration failed' 
+      return {
+        success: false,
+        message: error.response?.data?.message || "Registration failed",
       };
     }
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem("token");
+    localStorage.removeItem("fullName");
     setToken(null);
     setUser(null);
   };

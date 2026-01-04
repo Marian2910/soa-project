@@ -26,13 +26,11 @@ public class AuthService : IAuthService
 
     public async Task<object> RegisterAsync(RegisterDto request)
     {
-        // Check if user exists
         var existing = await _users.Find(u => u.Email == request.Email).FirstOrDefaultAsync();
         if (existing != null) throw new BadRequestException("User already exists.");
 
-        // Hash password (for demo using plain text, replace with BCrypt in prod)
-        var hashedPassword = request.Password; // TODO: BCrypt.HashPassword(request.Password);
-
+        var hashedPassword = request.Password;
+        
         var user = new User
         {
             Email = request.Email,
@@ -78,8 +76,8 @@ public class AuthService : IAuthService
         return new
         {
             Token = jwt,
-            FullName = user.FullName,
-            Iban = user.Iban
+            user.FullName,
+            user.Iban
         };
     }
 }

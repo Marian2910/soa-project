@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { ProfileService, OtpService } from "../api/services";
+import { ProfileService } from "../api/services";
 import { maskIban, formatCurrency, formatDate } from "../utils/formatters";
 import Layout from "../components/Layout";
 import { useNavigate } from "react-router-dom";
@@ -70,24 +70,25 @@ const Dashboard = () => {
     setModalMessage(null);
 
     try {
-      const response = await OtpService.requestOtp({
-        purpose: "IBAN_CHANGE",
-        newIban: newIban.replace(/\s+/g, ""),
-      });
+      const { transactionId } = await ProfileService.requestIbanChange(
+        newIban.replace(/\s+/g, "")
+      );
 
       setIsModalOpen(false);
 
       navigate("/verify-identity", {
         state: {
           email: user.email,
-          transactionId: response.transactionId,
+          transactionId,
           newIban: newIban.replace(/\s+/g, ""),
         },
       });
     } catch (err) {
       setModalMessage({
         type: "error",
-        text: "Failed to send OTP. Please try again.",
+        text:
+          err.response?.data?.message ||
+          "Failed to request IBAN change. Please try again.",
       });
     } finally {
       setProcessLoading(false);

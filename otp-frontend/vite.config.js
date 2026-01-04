@@ -9,17 +9,20 @@ export default defineConfig({
       name: "otp_app",
       filename: "remoteEntry.js",
       exposes: {
-        "./OtpVerifier": "./src/OtpVerifier.jsx",
+        "./OtpVerifier": "./src/components/OtpVerifier.jsx",
       },
       shared: ["react", "react-dom"],
     }),
   ],
-  build: {
-    target: "esnext",
-    minify: false,
-    cssCodeSplit: false,
-  },
   server: {
     port: 3001,
+    cors: true, // basic CORS
+    fs: { strict: false },
+    headers: {
+      // required for cross-origin module scripts
+      "Access-Control-Allow-Origin": "http://localhost:5173",
+      "Cross-Origin-Opener-Policy": "same-origin",
+      "Cross-Origin-Embedder-Policy": "require-corp",
+    },
   },
 });

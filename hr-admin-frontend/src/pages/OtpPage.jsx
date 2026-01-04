@@ -1,4 +1,4 @@
-import React, { Suspense } from "react";
+import React, { Suspense, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { ProfileService } from "../api/services";
 import { useAuth } from "../context/AuthContext";

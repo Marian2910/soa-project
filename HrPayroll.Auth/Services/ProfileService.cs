@@ -1,7 +1,7 @@
-using HrPayroll.Auth.Exceptions;
 using HrPayroll.Auth.Models;
 using HrPayroll.Profile.Models;
 using MongoDB.Driver;
+using HrPayroll.Auth.Exceptions;
 
 namespace HrPayroll.Auth.Services;
 
@@ -10,10 +10,18 @@ public class ProfileService : IProfileService
     private readonly IMongoCollection<User> _users;
     private readonly IMongoCollection<EmployeeFinancials> _financials;
     private readonly HttpClient _otpClient;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public ProfileService(IConfiguration config, IHttpClientFactory httpClientFactory)
+    public ProfileService(
+        IConfiguration config,
+        IHttpClientFactory httpClientFactory,
+        IHttpContextAccessor httpContextAccessor)
     {
-        var mongoUrl = config["MongoDb:ConnectionString"] ?? "mongodb://admin:password@localhost:27017";
+        _httpContextAccessor = httpContextAccessor ?? 
+            throw new ArgumentNullException(nameof(httpContextAccessor));
+
+        var mongoUrl = config["MongoDb:ConnectionString"] 
+                       ?? "mongodb://admin:password@localhost:27017";
         var client = new MongoClient(mongoUrl);
         var db = client.GetDatabase("HrPayrollDb");
 
@@ -26,7 +34,8 @@ public class ProfileService : IProfileService
     public async Task<UserProfileDto> GetProfileAsync(string userId)
     {
         var user = await _users.Find(u => u.Id == userId).FirstOrDefaultAsync();
-        if (user == null) throw new NotFoundException("User not found");
+        if (user == null)
+            throw new NotFoundException("User not found.");
 
         return new UserProfileDto
         {
@@ -37,29 +46,35 @@ public class ProfileService : IProfileService
         };
     }
 
-    public async Task<EmployeeFinancials> GetFinancialsAsync(string userId)
+    public async Task<EmployeeFinancials?> GetFinancialsAsync(string userId)
     {
-        var financials = await _financials.Find(f => f.UserId == userId).FirstOrDefaultAsync();
-        if (financials == null)
-            throw new NotFoundException("Financial records not found for this user.");
-
-        return financials;
+        return await _financials.Find(f => f.UserId == userId).FirstOrDefaultAsync();
     }
 
     public async Task<string> RequestIbanChangeAsync(string userId, string newIban)
     {
         if (string.IsNullOrWhiteSpace(newIban))
-            throw new BadRequestException("IBAN is required.");
+            throw new BadRequestException("New IBAN is required.");
 
-        // generate transactionId
         var transactionId = Guid.NewGuid().ToString();
 
-        // call OTP microservice
-        var response = await _otpClient.PostAsJsonAsync("/api/otp/request", new
+        var payload = new
         {
             TransactionId = transactionId,
             Purpose = "iban_update"
-        });
+        };
+
+        var accessToken = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString();
+
+        var requestMessage = new HttpRequestMessage(HttpMethod.Post, "/api/otp/request")
+        {
+            Content = JsonContent.Create(payload)
+        };
+
+        if (!string.IsNullOrEmpty(accessToken))
+            requestMessage.Headers.Add("Authorization", accessToken);
+
+        var response = await _otpClient.SendAsync(requestMessage);
 
         if (!response.IsSuccessStatusCode)
             throw new BadRequestException("Failed to generate OTP");
@@ -69,14 +84,33 @@ public class ProfileService : IProfileService
 
     public async Task UpdateIbanAsync(string userId, string newIban, string transactionId, string otpCode)
     {
-        if (string.IsNullOrWhiteSpace(otpCode))
-            throw new BadRequestException("OTP code is required.");
+        if (string.IsNullOrWhiteSpace(newIban) ||
+            string.IsNullOrWhiteSpace(transactionId) ||
+            string.IsNullOrWhiteSpace(otpCode))
+        {
+            throw new BadRequestException("All fields are required.");
+        }
 
-        var verifyPayload = new { TransactionId = transactionId, Code = otpCode };
-        var response = await _otpClient.PostAsJsonAsync("/api/otp/verify", verifyPayload);
+        var accessToken = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString();
+
+        var verifyPayload = new
+        {
+            TransactionId = transactionId,
+            Code = otpCode
+        };
+
+        var requestMessage = new HttpRequestMessage(HttpMethod.Post, "/api/otp/verify")
+        {
+            Content = JsonContent.Create(verifyPayload)
+        };
+
+        if (!string.IsNullOrEmpty(accessToken))
+            requestMessage.Headers.Add("Authorization", accessToken);
+
+        var response = await _otpClient.SendAsync(requestMessage);
 
         if (!response.IsSuccessStatusCode)
-            throw new BadRequestException("Invalid or expired OTP. Update rejected.");
+            throw new InvalidOperationException("Invalid or expired OTP. Update rejected.");
 
         var update = Builders<User>.Update.Set(u => u.Iban, newIban);
         var result = await _users.UpdateOneAsync(u => u.Id == userId, update);
