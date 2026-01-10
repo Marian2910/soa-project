@@ -7,10 +7,21 @@ import {
   FiLock,
   FiCreditCard,
   FiArrowRight,
+  FiEye,
+  FiEyeOff,
 } from "react-icons/fi";
 import logo from "../assets/logo.png";
 
-const InputField = ({ icon, name, type, placeholder, value, onChange }) => (
+const InputField = ({
+  icon,
+  name,
+  type,
+  placeholder,
+  value,
+  onChange,
+  togglePassword,
+  showPassword,
+}) => (
   <div className="relative">
     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
       {icon}
@@ -22,8 +33,19 @@ const InputField = ({ icon, name, type, placeholder, value, onChange }) => (
       placeholder={placeholder}
       value={value}
       onChange={onChange}
-      className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-magenta focus:border-transparent outline-none transition-all bg-gray-50 focus:bg-white"
+      className={`block w-full pl-10 ${
+        togglePassword ? "pr-10" : "pr-3"
+      } py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-magenta focus:border-transparent outline-none transition-all bg-gray-50 focus:bg-white`}
     />
+    {togglePassword && (
+      <button
+        type="button"
+        onClick={togglePassword}
+        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-brand-magenta transition-colors cursor-pointer"
+      >
+        {showPassword ? <FiEyeOff /> : <FiEye />}
+      </button>
+    )}
   </div>
 );
 
@@ -31,9 +53,12 @@ const Register = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
+    confirmPassword: "",
     fullName: "",
     iban: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -41,7 +66,15 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    const result = await register(formData);
+
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    const { confirmPassword, ...dataToSend } = formData;
+
+    const result = await register(dataToSend);
     if (result.success) {
       alert("Registration successful! Please login.");
       navigate("/login");
@@ -90,10 +123,22 @@ const Register = () => {
           <InputField
             icon={<FiLock />}
             name="password"
-            type="password"
+            type={showPassword ? "text" : "password"}
             placeholder="Password"
             value={formData.password}
             onChange={handleChange}
+            togglePassword={() => setShowPassword(!showPassword)}
+            showPassword={showPassword}
+          />
+          <InputField
+            icon={<FiLock />}
+            name="confirmPassword"
+            type={showConfirmPassword ? "text" : "password"}
+            placeholder="Confirm Password"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            togglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
+            showPassword={showConfirmPassword}
           />
           <InputField
             icon={<FiCreditCard />}

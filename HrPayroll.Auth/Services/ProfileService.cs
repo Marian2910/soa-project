@@ -3,6 +3,8 @@ using HrPayroll.Profile.Models;
 using MongoDB.Driver;
 using HrPayroll.Auth.Exceptions;
 using System.Net.Http.Json;
+using Confluent.Kafka;
+using System.Text.Json;
 
 namespace HrPayroll.Auth.Services;
 
@@ -13,6 +15,7 @@ public class ProfileService : IProfileService
     private readonly IMongoCollection<PendingUpdate> _pendingUpdates;
     private readonly HttpClient _otpClient;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly string _kafkaBootstrapServers;
 
     public ProfileService(
         IConfiguration config,
@@ -32,6 +35,8 @@ public class ProfileService : IProfileService
         _pendingUpdates = db.GetCollection<PendingUpdate>("PendingUpdates");
 
         _otpClient = httpClientFactory.CreateClient("OtpClient");
+        
+        _kafkaBootstrapServers = config["Kafka:BootstrapServers"] ?? "localhost:9092";
     }
 
     public async Task<UserProfileDto> GetProfileAsync(string userId)
@@ -97,6 +102,8 @@ public class ProfileService : IProfileService
         await _users.UpdateOneAsync(u => u.Id == userId, update);
 
         await _pendingUpdates.DeleteOneAsync(p => p.Id == pending.Id);
+
+        await PublishToKafkaAsync(userId, pending.NewIban, transactionId);
     }
 
     public async Task ResendOtpAsync(string userId, string transactionId)
@@ -132,6 +139,36 @@ public class ProfileService : IProfileService
         {
             var error = await response.Content.ReadAsStringAsync();
             throw new InvalidOperationException($"OTP Service Error: {error}");
+        }
+    }
+
+    private async Task PublishToKafkaAsync(string userId, string newIban, string txnId)
+    {
+        var config = new ProducerConfig { BootstrapServers = _kafkaBootstrapServers };
+
+        using var producer = new ProducerBuilder<Null, string>(config).Build();
+
+        var eventData = new 
+        {
+            EventType = "IBAN_UPDATED",
+            UserId = userId,
+            NewIban = newIban,
+            TransactionId = txnId,
+            Timestamp = DateTime.UtcNow
+        };
+
+        var message = new Message<Null, string> 
+        { 
+            Value = JsonSerializer.Serialize(eventData) 
+        };
+
+        try 
+        {
+            await producer.ProduceAsync("audit-logs", message);
+        }
+        catch (ProduceException<Null, string> e)
+        {
+            Console.WriteLine($"Kafka delivery failed: {e.Error.Reason}");
         }
     }
 }

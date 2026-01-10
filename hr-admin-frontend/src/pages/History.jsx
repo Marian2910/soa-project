@@ -10,7 +10,7 @@ const History = () => {
   const [user, setUser] = useState(null);
   const [financials, setFinancials] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [selectedSlip, setSelectedSlip] = useState(null); // State for the modal
+  const [selectedSlip, setSelectedSlip] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -121,7 +121,7 @@ const History = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-sm font-mono text-gray-900 text-right">
-                    {formatCurrency(item.amount)}
+                    {formatCurrency(item.amount, "RON")}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <button

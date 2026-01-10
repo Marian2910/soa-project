@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { FiLock, FiUser, FiArrowRight } from "react-icons/fi";
+import { FiLock, FiUser, FiArrowRight, FiEye, FiEyeOff } from "react-icons/fi";
 import logo from "../assets/logo.png";
 
 const Login = () => {
   const [formData, setFormData] = useState({ username: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -20,7 +21,6 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex bg-white font-sans">
-      {/* Left Side - Visual */}
       <div className="hidden lg:flex w-1/2 bg-gradient-to-br from-brand-indigo to-brand-magenta items-center justify-center relative overflow-hidden">
         <div className="absolute inset-0 bg-black/10"></div>
         <div className="relative z-10 text-white text-center px-12">
@@ -31,7 +31,6 @@ const Login = () => {
         </div>
       </div>
 
-      {/* Right Side - Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-brand-gray">
         <div className="max-w-md w-full bg-white p-10 rounded-2xl shadow-xl border border-gray-100">
           <div className="text-center mb-10">
@@ -61,7 +60,7 @@ const Login = () => {
                   type="text"
                   required
                   className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-indigo focus:border-transparent outline-none transition-all"
-                  placeholder="Enter your username"
+                  placeholder="Enter your email"
                   value={formData.username}
                   onChange={(e) =>
                     setFormData({ ...formData, username: e.target.value })
@@ -79,15 +78,22 @@ const Login = () => {
                   <FiLock />
                 </div>
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   required
-                  className="block w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-indigo focus:border-transparent outline-none transition-all"
+                  className="block w-full pl-10 pr-10 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-indigo focus:border-transparent outline-none transition-all"
                   placeholder="••••••••"
                   value={formData.password}
                   onChange={(e) =>
                     setFormData({ ...formData, password: e.target.value })
                   }
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-brand-indigo transition-colors cursor-pointer"
+                >
+                  {showPassword ? <FiEyeOff /> : <FiEye />}
+                </button>
               </div>
             </div>
 

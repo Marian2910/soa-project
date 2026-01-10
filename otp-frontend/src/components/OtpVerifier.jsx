@@ -51,7 +51,7 @@ export default function OtpVerifier({
       }, 1500);
     } catch (error) {
       setStatus("ERROR");
-      setErrorMessage(error.response?.data?.message || "Verification Failed");
+      setErrorMessage(error.response?.data?.message || "Incorrect verification code. Please try again.");
       setCode("");
     }
   };

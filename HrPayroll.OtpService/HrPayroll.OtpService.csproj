@@ -6,6 +6,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>BtHrPayroll.OtpService</RootNamespace>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <UserSecretsId>b0e01f7a-b7ea-40b5-8edf-2fe17f19dc5b</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

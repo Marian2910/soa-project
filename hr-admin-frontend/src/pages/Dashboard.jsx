@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { ProfileService } from "../api/services";
 import { maskIban, formatCurrency, formatDate } from "../utils/formatters";
 import Layout from "../components/Layout";
@@ -22,6 +22,7 @@ const Dashboard = () => {
   const [processLoading, setProcessLoading] = useState(false);
 
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate(); // Added missing hook
 
   useEffect(() => {
     fetchData();
@@ -30,14 +31,27 @@ const Dashboard = () => {
 
   const fetchData = async () => {
     try {
-      const [userData, financialData] = await Promise.all([
-        ProfileService.getProfile(),
-        ProfileService.getFinancials(),
-      ]);
+      // 1. Fetch Profile (Critical)
+      // If this fails (e.g. 401), the main catch block handles it
+      const userData = await ProfileService.getProfile();
       setUser(userData);
-      setFinancials(financialData);
+
+      // 2. Fetch Financials (Optional / Independent)
+      // We wrap this in its own try-catch so a 404 doesn't break the page
+      try {
+        const financialData = await ProfileService.getFinancials();
+        setFinancials(financialData);
+      } catch (finError) {
+        // It's normal for new users to not have financial records yet (404)
+        console.warn("Financial data not found:", finError);
+        setFinancials(null);
+      }
     } catch (err) {
-      console.error("Failed to fetch dashboard data", err);
+      console.error("Failed to fetch profile", err);
+      // If profile fails, redirect to login
+      if (err.response?.status === 401) {
+        navigate("/login");
+      }
     } finally {
       setLoading(false);
     }
@@ -112,7 +126,9 @@ const Dashboard = () => {
               Base Salary
             </p>
             <p className="text-2xl font-bold text-gray-900 mt-1">
-              {financials ? formatCurrency(financials.baseSalary) : "N/A"}
+              {financials
+                ? formatCurrency(financials.baseSalary, financials.currency)
+                : "N/A"}
             </p>
           </div>
           <div className="p-3 bg-green-50 text-green-600 rounded-full">
@@ -125,7 +141,7 @@ const Dashboard = () => {
               Employee Status
             </p>
             <p className="text-2xl font-bold mt-1">
-              {financials?.employmentStatus || "Unknown"}
+              {financials?.employmentStatus || "New / Unknown"}
             </p>
           </div>
           <div className="p-3 bg-white/20 rounded-full">
