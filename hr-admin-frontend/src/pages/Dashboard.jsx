@@ -14,11 +14,13 @@ import {
   FiPlusCircle,
 } from "react-icons/fi";
 import { toast } from "react-toastify";
+import SecurityAlertModal from "../components/SecurityAlertModal";
 
 const Dashboard = () => {
   const [user, setUser] = useState(null);
   const [financials, setFinancials] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showSecurityAlert, setShowSecurityAlert] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newIban, setNewIban] = useState("");
@@ -32,6 +34,34 @@ const Dashboard = () => {
   useEffect(() => {
     fetchData();
     checkForSuccess();
+
+    const ws = new WebSocket("ws://localhost:5062/ws/fraud-alerts");
+
+    ws.onopen = () => {
+      console.log("Connected to Fraud Alert System (WebSocket)");
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.EventType === "FRAUD_DETECTED") {
+          console.warn("Real-time Fraud Alert Received:", data);
+          setShowSecurityAlert(true);
+        }
+      } catch (error) {
+        console.error("Error parsing WebSocket message:", error);
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error("WebSocket Error:", error);
+    };
+
+    return () => {
+      if (ws.readyState === 1) {
+        ws.close();
+      }
+    };
   }, []);
 
   const fetchData = async () => {
@@ -216,6 +246,10 @@ const Dashboard = () => {
           </button>
         </div>
       </section>
+
+      {showSecurityAlert && (
+        <SecurityAlertModal onClose={() => setShowSecurityAlert(false)} />
+      )}
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto">

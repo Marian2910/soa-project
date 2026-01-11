@@ -34,6 +34,9 @@ builder.Services.AddScoped<IProfileService, ProfileService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddHostedService<KafkaAuditConsumer>();
 builder.Services.AddHostedService<TransactionCleanupService>();
+builder.Services.AddHostedService<FraudKafkaConsumer>();
+
+builder.Services.AddSingleton<FraudAlertService>();
 
 builder.Services.AddHttpContextAccessor();
 
@@ -70,5 +73,21 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.UseWebSockets();
+
+app.Map("/ws/fraud-alerts", async context =>
+{
+    if (context.WebSockets.IsWebSocketRequest)
+    {
+        var socket = await context.WebSockets.AcceptWebSocketAsync();
+        var handler = context.RequestServices.GetRequiredService<FraudAlertService>();
+        await handler.HandleClientAsync(socket);
+    }
+    else
+    {
+        context.Response.StatusCode = 400;
+    }
+});
 
 app.Run();

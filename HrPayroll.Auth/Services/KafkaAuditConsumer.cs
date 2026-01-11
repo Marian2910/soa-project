@@ -116,7 +116,7 @@ public class KafkaAuditConsumer : BackgroundService
             };
 
             await _auditCollection.InsertOneAsync(record);
-            Console.WriteLine($"[AuditConsumer] Saved log for {userId}: {eventType} at {timestamp}");
+            Console.WriteLine($"[AuditConsumer] Saved log for {userId}: {eventType}");
         }
         catch (Exception ex)
         {

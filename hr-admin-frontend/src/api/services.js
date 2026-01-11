@@ -49,3 +49,10 @@ export const ProfileService = {
     authApi.post("audit/log", { action, reference });
   },
 };
+
+export const SecurityService = {
+  checkRecentAlerts: async () => {
+    const response = await authApi.get("/security/alerts");
+    return response.data;
+  },
+};

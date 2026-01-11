@@ -1,6 +1,6 @@
-namespace HrPayroll.Profile.Models;
+namespace HrPayroll.Auth.Models.DTOs;
 
-public class UpdateIbanRequest
+public class UpdateIbanRequestDto
 {
     public string NewIban { get; set; } = string.Empty;
     public string OtpCode { get; set; } = string.Empty;
