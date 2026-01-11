@@ -24,15 +24,17 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// HttpClient for OTP microservice
 builder.Services.AddHttpClient("OtpClient", client =>
 {
-    var otpUrl = builder.Configuration["Services:OtpServiceUrl"] ?? "http://localhost:5191";
+    var otpUrl = builder.Configuration["Services:OtpServiceUrl"];
     client.BaseAddress = new Uri(otpUrl);
 });
 
 builder.Services.AddScoped<IProfileService, ProfileService>(); 
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddHostedService<KafkaAuditConsumer>();
+builder.Services.AddHostedService<TransactionCleanupService>();
+
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddControllers();

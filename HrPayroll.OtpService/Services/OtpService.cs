@@ -64,7 +64,8 @@ public class OtpService : IOtpService
         {
             TransactionId = transactionId,
             ExpiresInSeconds = _expirySeconds,
-            SentByEmail = !string.IsNullOrWhiteSpace(email),
+            ExpiresAt = expiry,
+            SentByEmail = !string.IsNullOrWhiteSpace(email)
         };
     }
 
@@ -74,7 +75,6 @@ public class OtpService : IOtpService
 
         if (!_otpStore.TryGetValue(key, out var entry))
         {
-            // Log failed attempt to Kafka (Optional but good for security)
             await _kafkaProducer.ProduceAsync(userId, transactionId, "FAILED_NOT_FOUND");
             throw new KeyNotFoundException("OTP not found or expired.");
         }
@@ -92,10 +92,8 @@ public class OtpService : IOtpService
             throw new Exception("Invalid OTP.");
         }
 
-        // Success!
         _otpStore.TryRemove(key, out _);
         
-        // --- KAFKA AUDIT EVENT ---
         await _kafkaProducer.ProduceAsync(userId, transactionId, "SUCCESS");
     }
 }

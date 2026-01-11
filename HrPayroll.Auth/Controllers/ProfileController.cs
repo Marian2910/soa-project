@@ -1,3 +1,4 @@
+using HrPayroll.Auth.Exceptions;
 using HrPayroll.Auth.Models;
 using HrPayroll.Auth.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -47,16 +48,33 @@ public class ProfileController : ControllerBase
     public async Task<IActionResult> InitiateUpdate([FromBody] InitiateUpdateDto request)
     {
         var userId = GetUserId();
-        var transactionId = await _profileService.InitiateIbanUpdateAsync(userId, request.NewIban);
-        return Ok(new { transactionId });
+        InitiateUpdateResponseDto responseDto =  await _profileService.InitiateIbanUpdateAsync(userId, request.NewIban);
+
+        return Ok(new { responseDto });
     }
 
     [HttpPost("finalize-update")]
     public async Task<IActionResult> FinalizeUpdate([FromBody] OtpVerifyRequest request)
     {
         var userId = GetUserId();
-        await _profileService.FinalizeIbanUpdateAsync(userId, request.TransactionId, request.Code);
-        return Ok(new { message = "IBAN updated successfully!" });
+
+        try
+        {
+            await _profileService.FinalizeIbanUpdateAsync(userId, request.TransactionId, request.Code);
+            return Ok(new { message = "IBAN updated successfully." });
+        }
+        catch (OtpExpiredException ex)
+        {
+            return BadRequest(new { type = "EXPIRED", message = ex.Message });
+        }
+        catch (OtpInvalidException ex)
+        {
+            return BadRequest(new { type = "INVALID", message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new { type = "GENERAL", message = ex.Message });
+        }
     }
 
     [HttpPost("resend-otp")]

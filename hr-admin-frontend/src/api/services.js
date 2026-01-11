@@ -17,4 +17,35 @@ export const ProfileService = {
     });
     return response.data;
   },
+
+  getAuditLogs: async (
+    page = 1,
+    pageSize = 5,
+    eventType = "",
+    details = "",
+    startDate = "",
+    endDate = ""
+  ) => {
+    const params = { page, pageSize };
+
+    if (eventType && eventType !== "ALL") {
+      params.eventType = eventType;
+    }
+    if (details) {
+      params.details = details;
+    }
+    if (startDate) {
+      params.startDate = startDate;
+    }
+    if (endDate) {
+      params.endDate = endDate;
+    }
+
+    const response = await authApi.get("/audit", { params });
+    return response.data;
+  },
+
+  logAction: async (action, reference = null) => {
+    authApi.post("audit/log", { action, reference });
+  },
 };

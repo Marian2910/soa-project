@@ -1,7 +1,9 @@
 export const maskIban = (iban) => {
   if (!iban || iban.length < 8) return '****';
+
+  const country = iban.slice(0, 2);
   const last4 = iban.slice(-4);
-  return `**** **** **** ${last4}`;
+  return `${country}** **** **** **** **** ${last4}`;
 };
 
 export const formatCurrency = (amount, currency = "EUR") => {

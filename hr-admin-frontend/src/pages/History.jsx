@@ -18,7 +18,6 @@ const History = () => {
 
   const fetchData = async () => {
     try {
-      // Fetch both profile (for name) and financials (for history)
       const [userData, financialData] = await Promise.all([
         ProfileService.getProfile(),
         ProfileService.getFinancials(),
@@ -61,6 +60,7 @@ const History = () => {
       workbook,
       `Payroll_History_${new Date().toISOString().split("T")[0]}.xlsx`
     );
+    ProfileService.logAction("PAYROLL_EXPORT");
   };
 
   return (

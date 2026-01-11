@@ -2,11 +2,19 @@ import React, { useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import { ProfileService } from "../api/services";
 import { maskIban } from "../utils/formatters";
-import { FiUser, FiMail, FiShield, FiCreditCard } from "react-icons/fi";
+import {
+  FiUser,
+  FiMail,
+  FiShield,
+  FiCreditCard,
+  FiEye,
+  FiEyeOff,
+} from "react-icons/fi";
 
 const Profile = () => {
   const [user, setUser] = useState(null);
   const [financials, setFinancials] = useState(null);
+  const [showIban, setShowIban] = useState(false);
 
   useEffect(() => {
     ProfileService.getProfile().then(setUser).catch(console.error);
@@ -82,9 +90,19 @@ const Profile = () => {
                     <p className="text-xs font-semibold text-gray-400 uppercase">
                       Active IBAN
                     </p>
-                    <p className="font-mono text-gray-900 bg-gray-50 px-2 rounded">
-                      {maskIban(user.iban)}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-mono text-gray-900 bg-gray-50 px-2 rounded">
+                        {showIban
+                          ? user.iban?.match(/.{1,4}/g)?.join(" ")
+                          : maskIban(user.iban)}
+                      </p>
+                      <button
+                        onClick={() => setShowIban(!showIban)}
+                        className="text-gray-400 hover:text-brand-indigo transition-colors"
+                      >
+                        {showIban ? <FiEyeOff /> : <FiEye />}
+                      </button>
+                    </div>
                   </div>
                 </div>
 

@@ -1,5 +1,6 @@
 import React from "react";
 import { formatCurrency, formatDate } from "../utils/formatters";
+import { ProfileService } from "../api/services";
 
 export default function PayslipModal({ payout, user, financials, onClose }) {
   if (!payout || !user) return null;
@@ -101,7 +102,10 @@ export default function PayslipModal({ payout, user, financials, onClose }) {
             Close
           </button>
           <button
-            onClick={() => window.print()}
+            onClick={() => {
+              ProfileService.logAction("PAYSLIP_DOWNLOAD", payout.reference);
+              window.print();
+            }}
             className="px-6 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition"
           >
             Print / Save PDF

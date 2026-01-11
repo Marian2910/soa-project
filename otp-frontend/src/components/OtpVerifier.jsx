@@ -6,11 +6,19 @@ export default function OtpVerifier({
   transactionId,
   token,
   returnUrl,
-  initialDuration = 120,
+  expiryTime,
   onCancel,
 }) {
+  const calculateTimeLeft = () => {
+    if (!expiryTime) return 120;
+    const now = Date.now();
+    const expiry = new Date(expiryTime).getTime();
+    const diff = Math.floor((expiry - now) / 1000);
+    return diff > 0 ? diff : 0;
+  };
+
   const [code, setCode] = useState("");
-  const [timeLeft, setTimeLeft] = useState(initialDuration);
+  const [timeLeft, setTimeLeft] = useState(calculateTimeLeft());
   const [status, setStatus] = useState("IDLE");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -21,12 +29,14 @@ export default function OtpVerifier({
   }, [token]);
 
   useEffect(() => {
-    if (!timeLeft) return;
+    setTimeLeft(calculateTimeLeft());
+
     const intervalId = setInterval(() => {
-      setTimeLeft((prev) => prev - 1);
+      setTimeLeft(calculateTimeLeft());
     }, 1000);
+
     return () => clearInterval(intervalId);
-  }, [timeLeft]);
+  }, [expiryTime]);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -51,18 +61,32 @@ export default function OtpVerifier({
       }, 1500);
     } catch (error) {
       setStatus("ERROR");
-      setErrorMessage(error.response?.data?.message || "Incorrect verification code. Please try again.");
+
+      const data = error.response?.data;
+      if (data?.type === "EXPIRED") {
+        setErrorMessage("OTP has expired. Please request a new code.");
+      } else if (data?.type === "INVALID") {
+        setErrorMessage("Incorrect OTP. Please try again.");
+      } else {
+        setErrorMessage(
+          data?.message || "Verification failed. Please try again."
+        );
+      }
+
       setCode("");
     }
   };
 
   const handleResend = async () => {
     try {
+      const newExpiryTime = new Date(Date.now() + 120 * 1000).toISOString();
       await resendOtp(transactionId);
+
+      // Update expiryTime to restart the countdown
       setTimeLeft(120);
       alert("New code sent!");
     } catch (error) {
-      alert("Failed to resend code.");
+      alert(error.response?.data?.message || "Failed to resend code.");
     }
   };
 

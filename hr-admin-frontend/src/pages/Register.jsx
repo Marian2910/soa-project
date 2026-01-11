@@ -5,7 +5,6 @@ import {
   FiUser,
   FiMail,
   FiLock,
-  FiCreditCard,
   FiArrowRight,
   FiEye,
   FiEyeOff,
@@ -55,7 +54,7 @@ const Register = () => {
     password: "",
     confirmPassword: "",
     fullName: "",
-    iban: "",
+    iban: "", 
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -139,14 +138,6 @@ const Register = () => {
             onChange={handleChange}
             togglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
             showPassword={showConfirmPassword}
-          />
-          <InputField
-            icon={<FiCreditCard />}
-            name="iban"
-            type="text"
-            placeholder="Initial IBAN (RO...)"
-            value={formData.iban}
-            onChange={handleChange}
           />
 
           <button

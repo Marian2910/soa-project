@@ -26,7 +26,7 @@ const Login = () => {
         <div className="relative z-10 text-white text-center px-12">
           <h1 className="text-5xl font-bold mb-6">Secure Payroll</h1>
           <p className="text-indigo-100 text-xl font-light">
-            Manage your finances securely with our next-gen HR system.
+            Manage your finances securely with our HR system.
           </p>
         </div>
       </div>

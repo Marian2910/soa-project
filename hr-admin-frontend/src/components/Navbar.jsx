@@ -1,6 +1,7 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { FiActivity } from "react-icons/fi";
 
 const Navbar = () => {
   const { user, logout } = useAuth();
@@ -36,6 +37,13 @@ const Navbar = () => {
                   className="text-white hover:bg-[#303f9f] px-3 py-2 rounded-md text-sm font-medium"
                 >
                   Dashboard
+                </Link>
+                <Link
+                  to="/audit"
+                  className="flex items-center gap-3 px-4 py-3 text-gray-600 hover:bg-indigo-50 hover:text-brand-indigo rounded-xl transition-colors"
+                >
+                  <FiActivity size={20} />
+                  <span className="font-medium">Audit Logs</span>
                 </Link>
                 <button
                   onClick={handleLogout}

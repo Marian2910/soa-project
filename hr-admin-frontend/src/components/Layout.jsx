@@ -1,6 +1,12 @@
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
-import { FiGrid, FiUser, FiLogOut, FiPieChart } from "react-icons/fi";
+import {
+  FiGrid,
+  FiUser,
+  FiLogOut,
+  FiPieChart,
+  FiActivity,
+} from "react-icons/fi";
 import logo from "../assets/logo.png";
 
 const Layout = ({ children }) => {
@@ -12,6 +18,7 @@ const Layout = ({ children }) => {
     { label: "Dashboard", path: "/dashboard", icon: <FiGrid /> },
     { label: "My Profile", path: "/profile", icon: <FiUser /> },
     { label: "Payroll History", path: "/history", icon: <FiPieChart /> },
+    { label: "Audit Logs", path: "/audit", icon: <FiActivity /> },
   ];
 
   return (

@@ -45,11 +45,11 @@ public class AuthService : IAuthService
         return new { message = "User registered successfully." };
     }
 
-    public async Task<object> LoginAsync(LoginDto request)
+    public async Task<LoginResponseDto> LoginAsync(LoginDto request)
     {
         var user = await _users.Find(u => u.Email == request.Username).FirstOrDefaultAsync();
         if (user == null || user.PasswordHash != request.Password)
-            throw new UnauthorizedException("Invalid credentials."); // TODO: Compare hashed passwords
+            throw new UnauthorizedException("Invalid credentials.");
 
         var claims = new List<Claim>
         {
@@ -73,11 +73,12 @@ public class AuthService : IAuthService
 
         var jwt = new JwtSecurityTokenHandler().WriteToken(token);
 
-        return new
+        return new LoginResponseDto
         {
             Token = jwt,
-            user.FullName,
-            user.Iban
+            Id = user.Id,
+            FullName = user.FullName,
+            Iban = user.Iban
         };
     }
 }

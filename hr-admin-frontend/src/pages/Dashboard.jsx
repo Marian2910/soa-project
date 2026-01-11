@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { ProfileService } from "../api/services";
 import { maskIban, formatCurrency, formatDate } from "../utils/formatters";
+import { validateIban } from "../utils/validators";
 import Layout from "../components/Layout";
 import {
   FiRefreshCw,
@@ -9,6 +10,8 @@ import {
   FiDollarSign,
   FiCalendar,
   FiCheckCircle,
+  FiAlertCircle,
+  FiPlusCircle,
 } from "react-icons/fi";
 import { toast } from "react-toastify";
 
@@ -22,7 +25,9 @@ const Dashboard = () => {
   const [processLoading, setProcessLoading] = useState(false);
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate(); // Added missing hook
+  const navigate = useNavigate();
+
+  const hasIban = user?.iban && user.iban.length > 0;
 
   useEffect(() => {
     fetchData();
@@ -31,24 +36,16 @@ const Dashboard = () => {
 
   const fetchData = async () => {
     try {
-      // 1. Fetch Profile (Critical)
-      // If this fails (e.g. 401), the main catch block handles it
       const userData = await ProfileService.getProfile();
       setUser(userData);
 
-      // 2. Fetch Financials (Optional / Independent)
-      // We wrap this in its own try-catch so a 404 doesn't break the page
       try {
         const financialData = await ProfileService.getFinancials();
         setFinancials(financialData);
       } catch (finError) {
-        // It's normal for new users to not have financial records yet (404)
-        console.warn("Financial data not found:", finError);
         setFinancials(null);
       }
     } catch (err) {
-      console.error("Failed to fetch profile", err);
-      // If profile fails, redirect to login
       if (err.response?.status === 401) {
         navigate("/login");
       }
@@ -60,28 +57,44 @@ const Dashboard = () => {
   const checkForSuccess = () => {
     const status = searchParams.get("status");
     if (status === "success") {
-      toast.success("Identity Verified. IBAN Updated Successfully!");
+      toast.success("Identity Verified. Banking Details Updated!");
       setSearchParams({});
     }
   };
 
+  const formatIban = (value) => {
+    return (
+      value
+        .replace(/[^a-zA-Z0-9]/g, "")
+        .toUpperCase()
+        .match(/.{1,4}/g)
+        ?.join(" ") || ""
+    );
+  };
+
   const handleInitiateUpdate = async (e) => {
     e.preventDefault();
+
+    if (!validateIban(newIban)) {
+      toast.error("Invalid IBAN. Please check and try again.");
+      return;
+    }
+
     setProcessLoading(true);
 
     try {
       const response = await ProfileService.initiateIbanUpdate(newIban);
 
-      if (response && response.transactionId) {
-        const txnId = response.transactionId;
+      if (response && response.responseDto?.transactionId) {
+        const txnId = response.responseDto.transactionId;
+        const expiry = response.responseDto.expiresAt;
         const token = localStorage.getItem("token");
         const email = user.email;
 
         const otpAppUrl = `http://localhost:3001`;
         const returnUrl = window.location.origin + "/dashboard";
 
-        // REDIRECT with Payload
-        window.location.href = `${otpAppUrl}?txnId=${txnId}&email=${email}&token=${token}&returnUrl=${returnUrl}`;
+        window.location.href = `${otpAppUrl}?txnId=${txnId}&email=${email}&token=${token}&returnUrl=${returnUrl}&expiry=${expiry}`;
       }
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to initiate update.");
@@ -126,9 +139,7 @@ const Dashboard = () => {
               Base Salary
             </p>
             <p className="text-2xl font-bold text-gray-900 mt-1">
-              {financials
-                ? formatCurrency(financials.baseSalary, financials.currency)
-                : "N/A"}
+              {financials ? formatCurrency(financials.baseSalary) : "N/A"}
             </p>
           </div>
           <div className="p-3 bg-green-50 text-green-600 rounded-full">
@@ -156,24 +167,52 @@ const Dashboard = () => {
           <h2 className="font-bold text-gray-800">Banking Details</h2>
         </div>
         <div className="p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div>
-            <label className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
-              Current IBAN
-            </label>
-            <div className="flex items-center gap-3 mt-1">
-              <span className="font-mono text-xl text-gray-700 bg-gray-50 px-3 py-1 rounded border border-gray-200">
-                {maskIban(user?.iban)}
-              </span>
-              <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">
-                Verified
-              </span>
+          {hasIban ? (
+            <div>
+              <label className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                Current IBAN
+              </label>
+              <div className="flex items-center gap-3 mt-1">
+                <span className="font-mono text-xl text-gray-700 bg-gray-50 px-3 py-1 rounded border border-gray-200">
+                  {maskIban(user?.iban)}
+                </span>
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">
+                  Verified
+                </span>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-red-50 text-red-500 rounded-full">
+                <FiAlertCircle size={24} />
+              </div>
+              <div>
+                <p className="font-bold text-red-600">Action Required</p>
+                <p className="text-sm text-gray-500">
+                  Please set up your direct deposit account.
+                </p>
+              </div>
+            </div>
+          )}
+
           <button
             onClick={() => setIsModalOpen(true)}
-            className="flex items-center gap-2 bg-brand-indigo hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-medium transition-all shadow-md shadow-indigo-500/20"
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all shadow-md 
+              ${
+                hasIban
+                  ? "bg-white border border-gray-200 text-brand-indigo hover:bg-gray-50"
+                  : "bg-brand-indigo hover:bg-indigo-700 text-white shadow-indigo-500/20"
+              }`}
           >
-            <FiRefreshCw /> Update IBAN
+            {hasIban ? (
+              <>
+                <FiRefreshCw /> Update IBAN
+              </>
+            ) : (
+              <>
+                <FiPlusCircle /> Set Up IBAN
+              </>
+            )}
           </button>
         </div>
       </section>
@@ -187,20 +226,25 @@ const Dashboard = () => {
             ></div>
             <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full p-8">
               <h3 className="text-xl font-bold text-gray-900 mb-4">
-                Request Update
+                {hasIban ? "Update Banking Details" : "Set Up Direct Deposit"}
               </h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Please enter your {hasIban ? "new" : ""} IBAN below. You will be
+                redirected to a secure portal to verify your identity.
+              </p>
+
               <form onSubmit={handleInitiateUpdate} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    New IBAN
+                    IBAN Account
                   </label>
                   <input
                     type="text"
                     required
-                    className="block w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-indigo outline-none"
+                    className="block w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-indigo outline-none font-mono uppercase placeholder-gray-300"
                     value={newIban}
-                    onChange={(e) => setNewIban(e.target.value.toUpperCase())}
-                    placeholder="RO..."
+                    onChange={(e) => setNewIban(formatIban(e.target.value))}
+                    placeholder="RO98 BTRL 0000 0000 0000 00XX"
                   />
                 </div>
                 <div className="flex gap-3 mt-6">
@@ -216,7 +260,7 @@ const Dashboard = () => {
                     disabled={processLoading}
                     className="flex-1 py-3 bg-brand-indigo text-white rounded-xl font-medium hover:bg-indigo-700"
                   >
-                    {processLoading ? "Redirecting..." : "Verify Identity"}
+                    {processLoading ? "Processing..." : "Continue"}
                   </button>
                 </div>
               </form>

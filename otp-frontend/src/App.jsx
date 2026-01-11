@@ -10,15 +10,15 @@ function App() {
   });
 
   useEffect(() => {
-    // CAPTURE DATA FROM REDIRECT URL
     const urlParams = new URLSearchParams(window.location.search);
     const txnId = urlParams.get("txnId");
     const email = urlParams.get("email");
     const token = urlParams.get("token");
+    const expiry = urlParams.get("expiry");
     const returnUrl = urlParams.get("returnUrl");
 
     if (txnId && token && returnUrl) {
-      setParams({ txnId, email, token, returnUrl });
+      setParams({ txnId, email, token, expiry, returnUrl });
     } else {
       console.error("Missing required parameters in URL");
     }
@@ -26,7 +26,6 @@ function App() {
 
   const handleCancel = () => {
     if (params.returnUrl) {
-      // Redirect back without success flag
       window.location.href = params.returnUrl;
     }
   };
@@ -46,6 +45,7 @@ function App() {
           email={params.email}
           transactionId={params.txnId}
           token={params.token}
+          expiryTime={params.expiry}
           returnUrl={params.returnUrl}
           onCancel={handleCancel}
           initialDuration={120}

@@ -42,7 +42,7 @@ public class OtpController : ControllerBase
 
         var (userId, email) = GetUserIdentity();
 
-        var otpResponse = await _otpService.IssueOtpAsync(userId, email, request.TransactionId, request.Purpose);
+        OtpResponseDto otpResponse = await _otpService.IssueOtpAsync(userId, email, request.TransactionId, request.Purpose);
 
         return Ok(otpResponse);
     }

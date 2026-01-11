@@ -2,9 +2,10 @@ using HrPayroll.Auth.Models;
 using HrPayroll.Profile.Models;
 using MongoDB.Driver;
 using HrPayroll.Auth.Exceptions;
-using System.Net.Http.Json;
 using Confluent.Kafka;
 using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
+using HrPayroll.Auth.Controllers;
 
 namespace HrPayroll.Auth.Services;
 
@@ -22,10 +23,10 @@ public class ProfileService : IProfileService
         IHttpClientFactory httpClientFactory,
         IHttpContextAccessor httpContextAccessor)
     {
-        _httpContextAccessor = httpContextAccessor ?? 
+        _httpContextAccessor = httpContextAccessor ??
             throw new ArgumentNullException(nameof(httpContextAccessor));
 
-        var mongoUrl = config["MongoDb:ConnectionString"] 
+        var mongoUrl = config["MongoDb:ConnectionString"]
                        ?? "mongodb://admin:password@localhost:27017";
         var client = new MongoClient(mongoUrl);
         var db = client.GetDatabase("HrPayrollDb");
@@ -35,7 +36,7 @@ public class ProfileService : IProfileService
         _pendingUpdates = db.GetCollection<PendingUpdate>("PendingUpdates");
 
         _otpClient = httpClientFactory.CreateClient("OtpClient");
-        
+
         _kafkaBootstrapServers = config["Kafka:BootstrapServers"] ?? "localhost:9092";
     }
 
@@ -59,7 +60,7 @@ public class ProfileService : IProfileService
         return await _financials.Find(f => f.UserId == userId).FirstOrDefaultAsync();
     }
 
-    public async Task<string> InitiateIbanUpdateAsync(string userId, string newIban)
+    public async Task<InitiateUpdateResponseDto> InitiateIbanUpdateAsync(string userId, string newIban)
     {
         if (string.IsNullOrWhiteSpace(newIban))
             throw new BadRequestException("New IBAN is required.");
@@ -75,15 +76,36 @@ public class ProfileService : IProfileService
         };
         await _pendingUpdates.InsertOneAsync(pending);
 
-        var payload = new
+        var payload = new { TransactionId = transactionId, Purpose = "IBAN Update" };
+
+        var accessToken = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString();
+
+        var requestMessage = new HttpRequestMessage(HttpMethod.Post, "/api/otp/request")
         {
-            TransactionId = transactionId,
-            Purpose = "IBAN Update"
+            Content = JsonContent.Create(payload)
         };
 
-        await CallOtpServiceAsync("/api/otp/request", payload);
+        if (!string.IsNullOrEmpty(accessToken))
+        {
+            requestMessage.Headers.Add("Authorization", accessToken);
+        }
 
-        return transactionId;
+        var response = await _otpClient.SendAsync(requestMessage);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorText = await response.Content.ReadAsStringAsync();
+            throw new InvalidOperationException($"OTP Generation Failed: {response.StatusCode} - {errorText}");
+        }
+
+        var otpResult = await response.Content.ReadFromJsonAsync<OtpResponseDto>()
+            ?? throw new InvalidOperationException("Failed to deserialize OTP response.");
+
+        return new InitiateUpdateResponseDto
+        {
+            TransactionId = transactionId,
+            ExpiresAt = otpResult.ExpiresAt
+        };
     }
 
     public async Task FinalizeIbanUpdateAsync(string userId, string transactionId, string otpCode)
@@ -103,7 +125,18 @@ public class ProfileService : IProfileService
 
         await _pendingUpdates.DeleteOneAsync(p => p.Id == pending.Id);
 
-        await PublishToKafkaAsync(userId, pending.NewIban, transactionId);
+        try
+        {
+            await PublishToKafkaAsync(userId, pending.NewIban, transactionId);
+        }
+        catch (ProduceException<Null, string> ex)
+        {
+            Console.WriteLine($"[WARNING] Audit Log Failed (Kafka Error): {ex.Error.Reason}");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[WARNING] Audit Log Failed (General Error): {ex.Message}");
+        }
     }
 
     public async Task ResendOtpAsync(string userId, string transactionId)
@@ -119,10 +152,10 @@ public class ProfileService : IProfileService
         await CallOtpServiceAsync("/api/otp/request", payload);
     }
 
-    private async Task CallOtpServiceAsync(string endpoint, object payload)
+    private async Task<OtpResponseDto> CallOtpServiceAsync(string endpoint, object payload)
     {
-        var accessToken = _httpContextAccessor.HttpContext?.Request.Headers.Authorization.ToString();
-        
+        var accessToken = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].ToString();
+
         var requestMessage = new HttpRequestMessage(HttpMethod.Post, endpoint)
         {
             Content = JsonContent.Create(payload)
@@ -134,21 +167,34 @@ public class ProfileService : IProfileService
         }
 
         var response = await _otpClient.SendAsync(requestMessage);
+        var content = await response.Content.ReadAsStringAsync();
 
         if (!response.IsSuccessStatusCode)
         {
-            var error = await response.Content.ReadAsStringAsync();
-            throw new InvalidOperationException($"OTP Service Error: {error}");
+            if (content.Contains("expired", StringComparison.OrdinalIgnoreCase))
+                throw new OtpExpiredException("OTP has expired.");
+            else
+                throw new OtpInvalidException(content);
         }
+
+        var otpResult = await response.Content.ReadFromJsonAsync<OtpResponseDto>()
+            ?? throw new InvalidOperationException("Failed to deserialize OTP response.");
+
+        return otpResult;
     }
+
 
     private async Task PublishToKafkaAsync(string userId, string newIban, string txnId)
     {
-        var config = new ProducerConfig { BootstrapServers = _kafkaBootstrapServers };
+        var config = new ProducerConfig
+        {
+            BootstrapServers = _kafkaBootstrapServers,
+            MessageTimeoutMs = 2000
+        };
 
         using var producer = new ProducerBuilder<Null, string>(config).Build();
 
-        var eventData = new 
+        var eventData = new
         {
             EventType = "IBAN_UPDATED",
             UserId = userId,
@@ -157,18 +203,11 @@ public class ProfileService : IProfileService
             Timestamp = DateTime.UtcNow
         };
 
-        var message = new Message<Null, string> 
-        { 
-            Value = JsonSerializer.Serialize(eventData) 
+        var message = new Message<Null, string>
+        {
+            Value = JsonSerializer.Serialize(eventData)
         };
 
-        try 
-        {
-            await producer.ProduceAsync("audit-logs", message);
-        }
-        catch (ProduceException<Null, string> e)
-        {
-            Console.WriteLine($"Kafka delivery failed: {e.Error.Reason}");
-        }
+        await producer.ProduceAsync("audit-logs", message);
     }
 }
