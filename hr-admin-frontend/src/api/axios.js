@@ -1,11 +1,10 @@
 import axios from "axios";
 
 const authApi = axios.create({
-  baseURL: "http://localhost:5062/api",
+  baseURL: "/api",
   headers: { "Content-Type": "application/json" },
 });
 
-// Request interceptor: attach token to every request
 authApi.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) {
@@ -14,22 +13,15 @@ authApi.interceptors.request.use((config) => {
   return config;
 });
 
-// Response interceptor: handle 401 and network errors
 authApi.interceptors.response.use(
-  (response) => {
-    // If the server returned a token in this response, save it
-    if (response.data?.token) {
-      localStorage.setItem("token", response.data.token);
-    }
-    return response;
-  },
+  (response) => response,
   (error) => {
     const { response } = error;
 
-    // Unauthorized or network errors → log out
     if (response && response.status === 401) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
+
       if (window.location.pathname !== "/login") {
         window.location.href = "/login";
       }
@@ -39,11 +31,7 @@ authApi.interceptors.response.use(
       !response &&
       (error.code === "ERR_NETWORK" || error.code === "ECONNABORTED")
     ) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      if (window.location.pathname !== "/login") {
-        window.location.href = "/login";
-      }
+      console.error("Network error - Backend unreachable");
     }
 
     return Promise.reject(error);

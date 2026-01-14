@@ -6,6 +6,13 @@ export default defineConfig({
   server: {
     port: 3001,
     cors: true,
+    proxy: {
+      "/api": {
+        target: "http://localhost:5062",
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
   build: {
     target: "esnext",

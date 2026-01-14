@@ -169,7 +169,9 @@ const Dashboard = () => {
               Base Salary
             </p>
             <p className="text-2xl font-bold text-gray-900 mt-1">
-              {financials ? formatCurrency(financials.baseSalary) : "N/A"}
+              {financials
+                ? formatCurrency(financials.baseSalary, financials.currency)
+                : "N/A"}
             </p>
           </div>
           <div className="p-3 bg-green-50 text-green-600 rounded-full">

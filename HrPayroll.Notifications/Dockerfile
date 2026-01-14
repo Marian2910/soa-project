@@ -1,14 +1,14 @@
-﻿FROM mcr.microsoft.com/dotnet/runtime:8.0 AS base
-USER $APP_UID
+FROM mcr.microsoft.com/dotnet/runtime:8.0 AS base
+USER app
 WORKDIR /app
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["HrPayroll.Notifications/HrPayroll.Notifications.csproj", "HrPayroll.Notifications/"]
-RUN dotnet restore "HrPayroll.Notifications/HrPayroll.Notifications.csproj"
+COPY ["HrPayroll.Notifications.csproj", "."]
+RUN dotnet restore "./HrPayroll.Notifications.csproj"
 COPY . .
-WORKDIR "/src/HrPayroll.Notifications"
+WORKDIR "/src/."
 RUN dotnet build "./HrPayroll.Notifications.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish

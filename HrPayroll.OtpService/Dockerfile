@@ -1,16 +1,15 @@
 ﻿FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER $APP_UID
+USER app
 WORKDIR /app
 EXPOSE 8080
-EXPOSE 8081
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["HrPayroll.OtpService/HrPayroll.OtpService.csproj", "HrPayroll.OtpService/"]
-RUN dotnet restore "HrPayroll.OtpService/HrPayroll.OtpService.csproj"
+COPY ["HrPayroll.OtpService.csproj", "."]
+RUN dotnet restore "./HrPayroll.OtpService.csproj"
 COPY . .
-WORKDIR "/src/HrPayroll.OtpService"
+WORKDIR "/src/."
 RUN dotnet build "./HrPayroll.OtpService.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 FROM build AS publish

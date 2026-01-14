@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Layout from "../components/Layout";
 import { ProfileService } from "../api/services";
-import { maskIban } from "../utils/formatters";
+import { maskIban, formatIban } from "../utils/formatters";
 import {
   FiUser,
   FiMail,
@@ -92,9 +92,7 @@ const Profile = () => {
                     </p>
                     <div className="flex items-center gap-2">
                       <p className="font-mono text-gray-900 bg-gray-50 px-2 rounded">
-                        {showIban
-                          ? user.iban?.match(/.{1,4}/g)?.join(" ")
-                          : maskIban(user.iban)}
+                        {showIban ? formatIban(user.iban) : maskIban(user.iban)}
                       </p>
                       <button
                         onClick={() => setShowIban(!showIban)}

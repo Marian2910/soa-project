@@ -6,7 +6,7 @@ import time
 from datetime import datetime
 from confluent_kafka import Consumer, Producer, KafkaError
 
-KAFKA_BROKER = os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092')
+KAFKA_BROKER = os.getenv('KAFKA_BOOTSTRAP_SERVERS')
 TOPIC = 'audit-logs'
 
 print(f"Starting Fraud Detector FaaS on {KAFKA_BROKER}...")

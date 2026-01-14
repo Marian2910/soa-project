@@ -69,11 +69,17 @@ const Audit = () => {
         filters.startDate,
         filters.endDate
       );
-      setLogs(response.data);
-      setTotalPages(response.totalPages);
+
+      // FIX: Handle both PascalCase (Data) and camelCase (data) and ensure it's an array
+      const logData = response.Data || response.data || [];
+      setLogs(logData);
+
+      const total = response.TotalPages || response.totalPages || 1;
+      setTotalPages(total);
       setTotalCount(response.totalCount);
     } catch (err) {
       console.error("Failed to fetch audit logs", err);
+      setLogs([]);
     } finally {
       setLoading(false);
     }
