@@ -52,6 +52,7 @@ _ReSharper.*/
 *.[Ee]xe
 *.[Dd]ll
 *.pdb
+*.env
 
 # Visual Studio Code
 .vscode/

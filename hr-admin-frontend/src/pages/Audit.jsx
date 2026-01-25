@@ -70,7 +70,6 @@ const Audit = () => {
         filters.endDate
       );
 
-      // FIX: Handle both PascalCase (Data) and camelCase (data) and ensure it's an array
       const logData = response.Data || response.data || [];
       setLogs(logData);
 
@@ -121,6 +120,8 @@ const Audit = () => {
         return <FiShield className="text-pink-600" size={20} />;
       case "IBAN_UPDATE_FAILED":
         return <FiShield className="text-red-600" size={20} />;
+      case "FRAUD_DETECTED":
+        return <FiShield className="text-red-600" size={20} />;
       case "PAYROLL_EXPORT":
       case "PAYSLIP_DOWNLOAD":
         return <FiDownload className="text-blue-600" size={20} />;
@@ -136,6 +137,8 @@ const Audit = () => {
       case "IBAN_UPDATED":
         return "bg-pink-100 text-pink-800";
       case "IBAN_UPDATE_FAILED":
+        return "bg-red-100 text-red-800";
+      case "FRAUD_DETECTED":
         return "bg-red-100 text-red-800";
       case "PAYROLL_EXPORT":
       case "PAYSLIP_DOWNLOAD":
@@ -175,6 +178,7 @@ const Audit = () => {
     { label: "Security Updates", value: "IBAN_UPDATED" },
     { label: "Failed Attempts", value: "IBAN_UPDATE_FAILED" },
     { label: "Data Exports", value: "PAYROLL_EXPORT" },
+    { label: "Fraud Detections", value: "FRAUD_DETECTED" },
   ];
 
   const filteredOptions = filterOptions.filter((option) =>
