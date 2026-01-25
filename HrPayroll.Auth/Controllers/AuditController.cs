@@ -113,6 +113,31 @@ public class AuditController : ControllerBase
         return Ok();
     }
 
+    [HttpGet("recent-fraud")]
+    public async Task<IActionResult> GetRecentFraudAlerts()
+    {
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                     ?? User.FindFirst("sub")?.Value;
+
+        if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+        // Only check for fraud in the last 30 seconds (time to complete OTP verification)
+        var thirtySecondsAgo = DateTime.UtcNow.AddSeconds(-30);
+
+        var builder = Builders<AuditRecord>.Filter;
+        var filter = builder.Eq(x => x.UserId, userId)
+                   & builder.Eq(x => x.Action, "FRAUD_DETECTED")
+                   & builder.Gte(x => x.Timestamp, thirtySecondsAgo);
+
+        var fraudAlerts = await _auditCollection
+            .Find(filter)
+            .SortByDescending(x => x.Timestamp)
+            .Limit(1)
+            .ToListAsync();
+
+        return Ok(new { HasRecentFraud = fraudAlerts.Any(), Alert = fraudAlerts.FirstOrDefault() });
+    }
+
     public class ClientAuditRequest
     {
         public string Action { get; set; } = string.Empty;

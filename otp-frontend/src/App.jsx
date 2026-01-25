@@ -51,7 +51,7 @@ function App() {
           initialDuration={120}
         />
         <p className="text-center mt-8 text-xs text-gray-400">
-          Secure Verification Portal (Port 3001)
+          Secure Verification Portal
         </p>
       </div>
     </div>

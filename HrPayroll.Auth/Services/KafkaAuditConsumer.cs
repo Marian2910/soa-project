@@ -106,6 +106,10 @@ public class KafkaAuditConsumer : BackgroundService
                 var refId = root.TryGetProperty("Reference", out var r) ? r.GetString() : "N/A";
                 details = $"Downloaded payslip: {refId}";
             }
+            else if (eventType == "FRAUD_DETECTED")
+            {
+                details = root.TryGetProperty("Details", out var d) ? d.GetString() : "Suspicious activity detected";
+            }
 
             var record = new AuditRecord
             {

@@ -7,12 +7,14 @@ namespace HrPayroll.Auth.Services;
 public class FraudKafkaConsumer : BackgroundService
 {
     private readonly FraudAlertService _fraudService;
+    private readonly ILogger<FraudKafkaConsumer> _logger;
     private readonly string _bootstrapServers;
     private readonly string _topic = "audit-logs";
 
-    public FraudKafkaConsumer(FraudAlertService fraudService, IConfiguration config)
+    public FraudKafkaConsumer(FraudAlertService fraudService, IConfiguration config, ILogger<FraudKafkaConsumer> logger)
     {
         _fraudService = fraudService;
+        _logger = logger;
         _bootstrapServers = config["Kafka:BootstrapServers"] ?? "localhost:9092";
     }
 
@@ -40,10 +42,12 @@ public class FraudKafkaConsumer : BackgroundService
 
                     if (cr?.Message?.Value != null)
                     {
+                        _logger.LogInformation($"[FraudConsumer] Received message: {cr.Message.Value}");
                         var alert = JsonSerializer.Deserialize<FraudAlertDto>(cr.Message.Value);
 
                         if (alert != null && alert.EventType == "FRAUD_DETECTED")
                         {
+                            _logger.LogWarning($"[FraudConsumer] Broadcasting fraud alert for user {alert.UserId}");
                             await _fraudService.BroadcastAsync(alert);
                         }
                     }

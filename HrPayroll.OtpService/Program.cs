@@ -100,9 +100,8 @@ var app = builder.Build();
 
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
-app.UseHttpsRedirection();
+app.UseCors("AllowFrontend");
 
-// IMPORTANT: Authentication must come BEFORE Authorization
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -110,8 +109,6 @@ if (!app.Environment.IsDevelopment())
 {
     app.UseHsts();
 }
-
-app.UseCors("AllowFrontend");
 
 // Swagger only in Development
 if (app.Environment.IsDevelopment())

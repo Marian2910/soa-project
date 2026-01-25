@@ -66,15 +66,11 @@ app.UseCors("AllowAll");
 
 app.UseMiddleware<ExceptionMiddleware>();
 
-app.UseHttpsRedirection();
+app.UseWebSockets();
 
 app.UseAuthentication();
 
 app.UseAuthorization();
-
-app.MapControllers();
-
-app.UseWebSockets();
 
 app.Map("/ws/fraud-alerts", async context =>
 {
@@ -89,5 +85,7 @@ app.Map("/ws/fraud-alerts", async context =>
         context.Response.StatusCode = 400;
     }
 });
+
+app.MapControllers();
 
 app.Run();

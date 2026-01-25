@@ -48,6 +48,11 @@ export const ProfileService = {
   logAction: async (action, reference = null) => {
     authApi.post("audit/log", { action, reference });
   },
+
+  checkRecentFraud: async () => {
+    const response = await authApi.get("/audit/recent-fraud");
+    return response.data;
+  },
 };
 
 export const SecurityService = {
