@@ -13,23 +13,24 @@ public class OtpServiceTests
 {
     private readonly SecureOtpGenerator _generator = new();
     private readonly Mock<IMessageProducer> _messageProducerMock = new();
+    private readonly Mock<KafkaProducer> _kafkaProducerMock = new();
 
     private OtpService CreateService(int expirySeconds = 120)
     {
-        // Create an in-memory configuration to simulate appsettings
         var inMemorySettings = new Dictionary<string, string?> {
-            {"OtpSettings:ExpirySeconds", expirySeconds.ToString()},
-            {"Kafka:BootstrapServers", "localhost:9092"}
+            {"OtpSettings:ExpirySeconds", expirySeconds.ToString()}
         };
-    
+
         IConfiguration configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(inMemorySettings)
             .Build();
 
-        // Create a real KafkaProducer instance (won't actually connect in tests)
-        var kafkaProducer = new KafkaProducer(configuration);
-
-        return new OtpService(_generator, _messageProducerMock.Object, kafkaProducer, configuration);
+        return new OtpService(
+            _generator,
+            _messageProducerMock.Object,
+            _kafkaProducerMock.Object,
+            configuration
+        );
     }
 
     [Fact]
@@ -188,4 +189,3 @@ public class OtpServiceTests
         Assert.Equal("OTP not found or expired.", ex.Message);
     }
 }
-    
